@@ -1,0 +1,52 @@
+name: luna
+description: "A music sequencer combined with a platform like spotify."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.6.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  audioplayers: ^6.2.0  
+  flutter_midi_command: ^0.5.3  
+  provider: ^6.0.3 # Example dependency for state management
+  shared_preferences: ^2.0.15
+  just_audio: ^0.9.46
+  
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  assets:
+    - assets/piano/C3.mp3
+    - assets/piano/C#3.mp3
+    - assets/piano/D3.mp3
+    - assets/piano/D#3.mp3
+    - assets/piano/E3.mp3
+    - assets/piano/F3.mp3
+    - assets/piano/F#3.mp3
+    - assets/piano/G3.mp3
+    - assets/piano/G#3.mp3
+    - assets/piano/A3.mp3
+    - assets/piano/A#3.mp3
+    - assets/piano/B3.mp3
+    - assets/piano/C4.mp3
+    - assets/piano/C#4.mp3
+    - assets/piano/D4.mp3
+    - assets/piano/D#4.mp3
+    - assets/profile.png
+    - assets/track1.jpg
+    - assets/track2.jpg
+    - assets/track3.jpg
+    - assets/track4.jpg
+    - assets/track5.jpg
+    - assets/track6.jpg
+    - assets/track7.jpg
+    - assets/track8.jpg
+    - assets/track9.jpg
+  uses-material-design: true

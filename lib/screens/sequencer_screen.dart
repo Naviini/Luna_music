@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'sequencer_grid_screen.dart'; 
 
-import 'package:flutter/material.dart';
-import 'sequencer_grid_screen.dart'; 
-
 class SequencerScreen extends StatelessWidget {
   const SequencerScreen({super.key});
 

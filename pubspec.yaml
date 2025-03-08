@@ -39,6 +39,22 @@ flutter:
     - assets/piano/C#4.mp3
     - assets/piano/D4.mp3
     - assets/piano/D#4.mp3
+    - assets/violin/C3.mp3
+    - assets/violin/C#3.mp3
+    - assets/violin/D3.mp3
+    - assets/violin/D#3.mp3
+    - assets/violin/E3.mp3
+    - assets/violin/F3.mp3
+    - assets/violin/F#3.mp3
+    - assets/violin/G3.mp3
+    - assets/violin/G#3.mp3
+    - assets/violin/A3.mp3
+    - assets/violin/A#3.mp3
+    - assets/violin/B3.mp3
+    - assets/violin/C4.mp3
+    - assets/violin/C#4.mp3
+    - assets/violin/D4.mp3
+    - assets/violin/D#4.mp3
     - assets/profile.png
     - assets/track1.jpg
     - assets/track2.jpg

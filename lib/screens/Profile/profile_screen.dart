@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import '../../player_screen.dart'; 
 import 'settings_screen.dart';
 import 'EditProfileScreen.dart';
 
@@ -13,29 +13,51 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String name = "Shenon Lekamge";
   String bio = "Music lover | Producer";
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  bool isPlaying = false;
-  String? currentTrack;
 
-  void _togglePlayPause(String trackUrl) async {
-    if (isPlaying && currentTrack == trackUrl) {
-      await _audioPlayer.pause();
-      setState(() {
-        isPlaying = false;
-      });
-    } else {
-      await _audioPlayer.play(UrlSource(trackUrl));
-      setState(() {
-        isPlaying = true;
-        currentTrack = trackUrl;
-      });
+  // List of songs
+  final List<Map<String, String>> songs = List.generate(9, (index) {
+    return {
+      "title": "Song ${index + 1}",
+      "artist": "Artist ${index + 1}",
+      "imageUrl": "assets/track${index + 1}.jpg",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${index + 1}.mp3",
+    };
+  });
+
+  void _playNextSong(int currentIndex) {
+    if (currentIndex < songs.length - 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MusicPlayerPage(
+            title: songs[currentIndex + 1]["title"]!,
+            artist: songs[currentIndex + 1]["artist"]!,
+            imageUrl: songs[currentIndex + 1]["imageUrl"]!,
+            url: songs[currentIndex + 1]["url"]!,
+            onNext: () => _playNextSong(currentIndex + 1),
+            onPrevious: () => _playPreviousSong(currentIndex + 1),
+          ),
+        ),
+      );
     }
   }
 
-  @override
-  void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
+  void _playPreviousSong(int currentIndex) {
+    if (currentIndex > 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MusicPlayerPage(
+            title: songs[currentIndex - 1]["title"]!,
+            artist: songs[currentIndex - 1]["artist"]!,
+            imageUrl: songs[currentIndex - 1]["imageUrl"]!,
+            url: songs[currentIndex - 1]["url"]!,
+            onNext: () => _playNextSong(currentIndex - 1),
+            onPrevious: () => _playPreviousSong(currentIndex - 1),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -87,8 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment
-                  .start, // Ensures text is aligned to the left
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
@@ -97,8 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontSize: 18,
                       color: Colors.white),
                 ),
-                const SizedBox(
-                    height: 8.0), // Optional: Add space between the texts
+                const SizedBox(height: 8.0),
                 Text(
                   bio,
                   style: const TextStyle(fontSize: 14, color: Colors.white70),
@@ -150,15 +170,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisSpacing: 5,
                 mainAxisSpacing: 5,
               ),
-              itemCount: 9,
+              itemCount: songs.length,
               itemBuilder: (context, index) {
-                String trackUrl =
-                    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${index + 1}.mp3';
-                String coverImage = 'assets/track${index + 1}.jpg';
-
                 return GestureDetector(
                   onTap: () {
-                    _togglePlayPause(trackUrl);
+                    // Navigate to player screen 
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MusicPlayerPage(
+                          title: songs[index]["title"]!,
+                          artist: songs[index]["artist"]!,
+                          imageUrl: songs[index]["imageUrl"]!,
+                          url: songs[index]["url"]!,
+                          onNext: () => _playNextSong(index),
+                          onPrevious: () => _playPreviousSong(index),
+                        ),
+                      ),
+                    );
                   },
                   child: Stack(
                     alignment: Alignment.center,
@@ -167,15 +196,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           image: DecorationImage(
-                            image: AssetImage(coverImage),
+                            image: AssetImage(songs[index]["imageUrl"]!),
                             fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      Icon(
-                        (isPlaying && currentTrack == trackUrl)
-                            ? Icons.pause_circle_filled
-                            : Icons.play_circle_fill,
+                      const Icon(
+                        Icons.play_circle_fill,
                         color: Colors.white,
                         size: 40,
                       ),

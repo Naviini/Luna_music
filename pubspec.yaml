@@ -39,6 +39,22 @@ flutter:
     - assets/piano/C#4.mp3
     - assets/piano/D4.mp3
     - assets/piano/D#4.mp3
+    - assets/guitar/C3.mp3
+    - assets/guitar/C#3.mp3
+    - assets/guitar/D3.mp3
+    - assets/guitar/D#3.mp3
+    - assets/guitar/E3.mp3
+    - assets/guitar/F3.mp3
+    - assets/guitar/F#3.mp3
+    - assets/guitar/G3.mp3
+    - assets/guitar/G#3.mp3
+    - assets/guitar/A3.mp3
+    - assets/guitar/A#3.mp3
+    - assets/guitar/B3.mp3
+    - assets/guitar/C4.mp3
+    - assets/guitar/C#4.mp3
+    - assets/guitar/D4.mp3
+    - assets/guitar/D#4.mp3
     - assets/violin/C3.mp3
     - assets/violin/C#3.mp3
     - assets/violin/D3.mp3
@@ -65,4 +81,6 @@ flutter:
     - assets/track7.jpg
     - assets/track8.jpg
     - assets/track9.jpg
+    - assets/tracks.json
+    - assets/templates.json
   uses-material-design: true

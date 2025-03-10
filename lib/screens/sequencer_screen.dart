@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'sequencer_grid_screen.dart'; 
+// import 'dart:convert';
+// import 'package:flutter/services.dart';
+// import '../track_loader.dart';
+import 'package:luna/track_loader.dart';
+import '../template_loader.dart';
+import 'settings_screen.dart'; // Import the new settings screen
 
 class SequencerScreen extends StatelessWidget {
   const SequencerScreen({super.key});
@@ -103,22 +109,30 @@ class SequencerScreen extends StatelessWidget {
                               context,
                               'Load Track',
                               Icons.folder_open,
-                              () {
-                                // TODO: Implement load functionality
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Coming soon!')),
-                                );
+                              () async {
+                                List<String> tracks = await loadTracks();
+                                if (tracks.isNotEmpty) {
+                                  _showTrackSelectionDialog(context, tracks);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('No tracks available!')),
+                                  );
+                                }
                               },
                             ),
                             _buildFeatureButton(
                               context,
                               'Templates',
                               Icons.library_music,
-                              () {
-                                // TODO: Implement templates functionality
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Coming soon!')),
-                                );
+                              () async {
+                                List<String> templates = await loadTemplates();
+                                if (templates.isNotEmpty) {
+                                  _showTemplateSelectionDialog(context, templates);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('No templates available!')),
+                                  );
+                                }
                               },
                             ),
                             _buildFeatureButton(
@@ -126,9 +140,9 @@ class SequencerScreen extends StatelessWidget {
                               'Settings',
                               Icons.settings,
                               () {
-                                // TODO: Implement settings functionality
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Coming soon!')),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const SettingsScreen()), // Navigate to SettingsScreen
                                 );
                               },
                             ),
@@ -187,86 +201,69 @@ class SequencerScreen extends StatelessWidget {
       ),
     );
   }
-}
-// class SequencerScreen extends StatelessWidget {
-//   const SequencerScreen({super.key});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Create Music'),
-//         backgroundColor: Theme.of(context).primaryColor,
-//       ),
-//       body: Container(
-//         decoration: BoxDecoration(
-//           gradient: LinearGradient(
-//             begin: Alignment.topCenter,
-//             end: Alignment.bottomCenter,
-//             colors: [
-//               Theme.of(context).primaryColor.withOpacity(0.8),
-//               Theme.of(context).primaryColor.withOpacity(0.2),
-//             ],
-//           ),
-//         ),
-//         child: Center(
-//           child: Card(
-//             elevation: 8,
-//             margin: const EdgeInsets.all(16),
-//             child: Padding(
-//               padding: const EdgeInsets.all(24),
-//               child: Column(
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   const Icon(
-//                     Icons.queue_music,
-//                     size: 100,
-//                     color: Colors.deepPurple,
-//                   ),
-//                   const SizedBox(height: 24),
-//                   const Text(
-//                     "Start Creating Your Track",
-//                     style: TextStyle(
-//                       fontSize: 24,
-//                       fontWeight: FontWeight.bold,
-//                       letterSpacing: 1.2,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 16),
-//                   const Text(
-//                     "Create amazing beats with our intuitive sequencer",
-//                     textAlign: TextAlign.center,
-//                     style: TextStyle(
-//                       fontSize: 16,
-//                       color: Colors.grey,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 24),
-//                   ElevatedButton.icon(
-//                     onPressed: () {
-//                       Navigator.push(
-//                         context,
-//                         MaterialPageRoute(builder: (context) => SequencerGridScreen()),
-//                       );
-//                     },
-//                     style: ElevatedButton.styleFrom(
-//                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(30),
-//                       ),
-//                     ),
-//                     icon: const Icon(Icons.play_circle_filled),
-//                     label: const Text(
-//                       "Open Sequencer",
-//                       style: TextStyle(fontSize: 18),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+  void _showTrackSelectionDialog(BuildContext context, List<String> tracks) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select a Track'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: tracks.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(tracks[index]),
+                  onTap: () {
+                    _loadSelectedTrack(context, tracks[index]);
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _loadSelectedTrack(BuildContext context, String trackName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Loading track: $trackName')),
+    );
+  }
+
+  void _showTemplateSelectionDialog(BuildContext context, List<String> templates) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select a Template'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              itemCount: templates.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(templates[index]),
+                  onTap: () {
+                    _loadSelectedTemplate(context, templates[index]);
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _loadSelectedTemplate(BuildContext context, String templateName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Loading template: $templateName')),
+    );
+    // Implement the logic to load the selected template into the sequencer
+  }
+}

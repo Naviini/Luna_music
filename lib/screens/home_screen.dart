@@ -18,7 +18,7 @@ class HomeScreen extends StatelessWidget {
               text: const TextSpan(
                 children: [
                   TextSpan(
-                    text: 'Mu',
+                    text: 'Lu',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   TextSpan(
-                    text: 'Sic',
+                    text: 'na',
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,

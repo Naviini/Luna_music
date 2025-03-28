@@ -82,5 +82,4 @@ flutter:
     - assets/track8.jpg
     - assets/track9.jpg
     - assets/tracks.json
-    - assets/templates.json
   uses-material-design: true

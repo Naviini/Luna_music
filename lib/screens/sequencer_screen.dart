@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'sequencer_grid_screen.dart'; 
+import 'package:luna/screens/sequencer_grid_screen.dart'; 
 // import 'dart:convert';
 // import 'package:flutter/services.dart';
 // import '../track_loader.dart';
@@ -65,7 +65,7 @@ class SequencerScreen extends StatelessWidget {
         ),
         child: Center(
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
+            width: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -91,62 +91,69 @@ class SequencerScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildFeatureButton(
-                              context,
-                              'New Track',
-                              Icons.add_circle_outline,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => SequencerGridScreen()),
-                                );
-                              },
-                            ),
-                            _buildFeatureButton(
-                              context,
-                              'Load Track',
-                              Icons.folder_open,
-                              () async {
-                                List<String> tracks = await loadTracks();
-                                if (tracks.isNotEmpty) {
-                                  _showTrackSelectionDialog(context, tracks);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('No tracks available!')),
+                        SizedBox(
+                          child: GridView.count(
+                            crossAxisCount: 2, // Two buttons per row
+                            mainAxisSpacing: 20, // Space between rows
+                            crossAxisSpacing: 20, // Space between columns
+                            padding: const EdgeInsets.all(16),
+                            shrinkWrap: true, // Allow the grid to take only the needed space
+                            physics: NeverScrollableScrollPhysics(), // Disable scrolling
+                            children: [
+                              _buildFeatureButton(
+                                context,
+                                'New Track',
+                                Icons.add_circle_outline,
+                                () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => SequencerGridScreen()),
                                   );
-                                }
-                              },
-                            ),
-                            _buildFeatureButton(
-                              context,
-                              'Templates',
-                              Icons.library_music,
-                              () async {
-                                List<String> templates = await loadTemplates();
-                                if (templates.isNotEmpty) {
-                                  _showTemplateSelectionDialog(context, templates);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('No templates available!')),
+                                },
+                              ),
+                              _buildFeatureButton(
+                                context,
+                                'Load Track',
+                                Icons.folder_open,
+                                () async {
+                                  List<String> tracks = await loadTracks();
+                                  if (tracks.isNotEmpty) {
+                                    _showTrackSelectionDialog(context, tracks);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('No tracks available!')),
+                                    );
+                                  }
+                                },
+                              ),
+                              _buildFeatureButton(
+                                context,
+                                'Templates',
+                                Icons.library_music,
+                                () async {
+                                  List<String> templates = await loadTemplates();
+                                  if (templates.isNotEmpty) {
+                                    _showTemplateSelectionDialog(context, templates);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('No templates available!')),
+                                    );
+                                  }
+                                },
+                              ),
+                              _buildFeatureButton(
+                                context,
+                                'Settings',
+                                Icons.settings,
+                                () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
                                   );
-                                }
-                              },
-                            ),
-                            _buildFeatureButton(
-                              context,
-                              'Settings',
-                              Icons.settings,
-                              () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const SettingsScreen()), // Navigate to SettingsScreen
-                                );
-                              },
-                            ),
-                          ],
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -175,26 +182,31 @@ class SequencerScreen extends StatelessWidget {
   ) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 52), // v-12
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20), // Adjusted padding
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10), //15
+          borderRadius: BorderRadius.circular(10),
         ),
-        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4),
-        elevation: 12, // Increased elevation
-        shadowColor: Colors.black.withOpacity(0.5), // More pronounced shadow
+        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.8), // More opaque background
+        elevation: 12,
+        shadowColor: Colors.black.withOpacity(0.5),
       ),
       onPressed: onPressed,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min, // Ensure minimal size
         children: [
-          Icon(icon, size: 32, color: Colors.white), // Larger icon
+          Center( // Center the icon
+            child: Icon(icon, size: 25, color: Colors.white), // Decreased icon size
+          ),
           const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          Center( // Center the text
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14, // Increased font size for better visibility
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center, // Center align the text
             ),
           ),
         ],

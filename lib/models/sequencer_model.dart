@@ -143,5 +143,4 @@ class SequencerModel extends ChangeNotifier {
     tempo = newTempo;
     notifyListeners();
   }
-
 }

@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'settings_screen.dart';
+import 'sequencer_screen.dart';
+import 'explore_screen.dart';
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+  
+ 
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       backgroundColor: Colors.black, // Black Background
       appBar: PreferredSize(
@@ -44,14 +51,20 @@ class HomeScreen extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.settings, color: Colors.white, size: 28),
-              onPressed: () {},
-            ),
+                    onPressed: () {
+                    Navigator.push(
+                    context,
+                   MaterialPageRoute(builder: (context) => const SettingsScreen()),
+               );
+             },
+           ),
+
           ],
         ),
       ),
        body: SingleChildScrollView(
         child: Column(
-          children: [
+          children: <Widget>[
             // ---- Top Section ----
             Stack(
               children: [
@@ -110,23 +123,29 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 30),
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        onPressed: () {},
-                        child: const Text(
-                          "START",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
+                         style: ElevatedButton.styleFrom(
+                         backgroundColor: Colors.white,
+                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                         shape: RoundedRectangleBorder(
+                         borderRadius: BorderRadius.circular(8),
+                       ),
+                     ),
+                      onPressed: () {
+                      Navigator.push(
+                      context,
+                     MaterialPageRoute(builder: (context) => const SequencerScreen()),
+                   );
+                  },
+                 child: const Text(
+                    "START",
+                    style: TextStyle(
+                    fontSize: 18,
+                   fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                    ),
+                   ),
+                  ),
+
                     ],
                   ),
                 ),
@@ -136,25 +155,112 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 10), // Space before scrolling section
 
             // ---- Scrollable Containers ----
-            ContainerSection(
-              title: "Explore...",
-              buttonText: "Explore now",
-              onTap: () {
-                // Navigate to Explore Page
-              },
+        Column(
+  children: [
+    // First Container with a unique background
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        height: 150,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          image: const DecorationImage(
+            image: AssetImage("assets/headphones-with-music-notes-headband-purple-background_1204450-18453.avif"), // Unique background for this section
+            fit: BoxFit.cover,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Explore...",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-            const SizedBox(height: 20),
-            ContainerSection(
-              title: "Music\nBox",
-              buttonText: "Create now",
+            const Spacer(),
+            GestureDetector(
               onTap: () {
-                // Navigate to Music Box Page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ExploreScreen()),
+                );
               },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    "Explore now",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                  Icon(Icons.arrow_right_alt, color: Colors.white),
+                ],
+              ),
             ),
+          ],
+        ),
+      ),
+    ),
 
-            const SizedBox(height: 40), // Space before New Releases section
+    const SizedBox(height: 10),
 
-            // ---- New Releases Section ----
+    // Second Container with a different background
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        width: double.infinity,
+        height: 150,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          image: const DecorationImage(
+            image: AssetImage("assets/photo-1470225620780-dba8ba36b745.jpeg"), // Different background image
+            fit: BoxFit.cover,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Music\nBox",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SequencerScreen()),
+                );
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    "Create now",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                  Icon(Icons.arrow_right_alt, color: Colors.white),
+                  ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+           const SizedBox(height: 30),
+       
+   // ---- New Releases Section ----
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Align(
@@ -218,7 +324,8 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-             
+
+
            const SizedBox(height: 10),
       
             // Top Creators Section
@@ -380,7 +487,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // ---- Social Media Links ----
+                  // ---- Social Media Links ----
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -398,11 +505,20 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 30),
-          ],
+            ],
         ),
       ),
     );
-  }
+  }   
+ 
+
+
+            
+        
+      
+    
+
+  
 
   // Footer Column Builder
   Widget _buildFooterColumn(String title, List<Widget> links) {
@@ -456,73 +572,5 @@ class HomeScreen extends StatelessWidget {
  
 
 
-        
-// Reusable Container Widget
-class ContainerSection extends StatelessWidget {
-  final String title;
-  final String buttonText;
-  final VoidCallback onTap;
-
-  const ContainerSection({
-    super.key,
-    required this.title,
-    required this.buttonText,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        height: 150,
-        decoration: BoxDecoration(
-          color: Colors.deepPurple, // Dark Purple Background
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: onTap,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    buttonText,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_right_alt, color: Colors.white),
-                ],
-              ),
-            ),
-          ],
-        )
-      ),
-    );
-  }
-}
     
-  
-
-
-        
-      
-    
-  
-
-
+ 

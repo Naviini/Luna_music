@@ -88,12 +88,13 @@ class SequencerModel extends ChangeNotifier {
   Future<void> loadSequence() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedSequence = prefs.getString('sequence');
-    if (savedSequence != null) {
-      List<bool> newGrid = savedSequence.split(',').map((e) => e == 'true').toList();
-      grid.setAll(0, newGrid);
-      notifyListeners();
+   List<bool> newGrid = (savedSequence ?? '').split(',')
+    .map((e) => e.trim().toLowerCase() == 'true')
+    .toList();
+
+    grid.setAll(0, newGrid);
+    notifyListeners();
     }
-  }
 
   void updateInstrument(String instrument) {
     selectedInstrument = instrument;
@@ -143,5 +144,4 @@ class SequencerModel extends ChangeNotifier {
     tempo = newTempo;
     notifyListeners();
   }
-
 }

@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "lunamusic"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "lunamusic-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

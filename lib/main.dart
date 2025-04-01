@@ -1,4 +1,3 @@
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:luna/firebase_options.dart';
@@ -8,13 +7,21 @@ import 'screens/sequencer_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/Profile/profile_screen.dart';
 
-void main() async{
-  //To initialize Firebase, call Firebase.initializeApp from the firebase_core package with the configuration from your new firebase_options.dart file:
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Add this line
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
-);
+  );
   runApp(const MusicSequencerApp());
 }
+
+// void main() async{
+//   //To initialize Firebase, call Firebase.initializeApp from the firebase_core package with the configuration from your new firebase_options.dart file:
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+// );
+//   runApp(const MusicSequencerApp());
+// }
 
 class MusicSequencerApp extends StatelessWidget {
   const MusicSequencerApp({super.key});

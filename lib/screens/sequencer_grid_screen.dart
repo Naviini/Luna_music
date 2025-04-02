@@ -5,6 +5,8 @@ import 'package:luna/widgets/sequencer_grid.dart';
 import '../models/sequencer_model.dart';
 
 class SequencerGridScreen extends StatefulWidget {
+  const SequencerGridScreen({super.key});
+
   @override
   _SequencerGridScreenState createState() => _SequencerGridScreenState();
 }
@@ -28,6 +30,8 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
   bool showChordSuggestions = false;
   bool autoSave = true;
   bool isPreferencesExpanded = false;
+  bool isControlsExpanded = false;
+  bool isSettingsExpanded = false;
 
   @override
   void initState() {
@@ -78,6 +82,7 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
         ),
         body: Column(
           children: [
+            // Instrument selector at the top
             Consumer<SequencerModel>(
               builder: (context, sequencer, child) {
                 return InstrumentSelector(
@@ -86,119 +91,183 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
                 );
               },
             ),
+            
+            // Main sequencer grid
             Expanded(
-              child: Row(
+              child: SequencerGrid(),
+            ),
+            
+            // Collapsible controls panel
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.deepPurpleAccent.withOpacity(0.3),
+                    width: 1.0,
+                  ),
+                ),
+              ),
+              child: Column(
                 children: [
-                  Expanded(
-                    flex: 7,
-                    child: SequencerGrid(),
+                  // Playback controls always visible
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Consumer<SequencerModel>(
+                      builder: (context, sequencer, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildControlButton(
+                              icon: Icons.first_page,
+                              color: Colors.blue,
+                              onPressed: () {
+                                sequencer.stopSequencer();
+                                sequencer.currentStep = 0;
+                              },
+                            ),
+                            const SizedBox(width: 20),
+                            _buildControlButton(
+                              icon: sequencer.isPlaying ? Icons.pause : Icons.play_arrow,
+                              color: Colors.green,
+                              onPressed: () {
+                                sequencer.isPlaying ? sequencer.stopSequencer() : sequencer.startSequencer();
+                              },
+                            ),
+                            const SizedBox(width: 20),
+                            _buildControlButton(
+                              icon: Icons.stop,
+                              color: Colors.red,
+                              onPressed: sequencer.stopSequencer,
+                            ),
+                            const SizedBox(width: 20),
+                            _buildControlButton(
+                              icon: Icons.last_page,
+                              color: Colors.blue,
+                              onPressed: () {
+                                sequencer.stopSequencer();
+                                sequencer.currentStep = SequencerModel.numSteps - 1;
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                   
-                  Expanded(
-                    flex: 3,
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          left: BorderSide(
-                            color: Colors.deepPurpleAccent.withOpacity(0.3),
-                            width: 1.0,
-                          ),
-                        ),
-                      ),
-                      child: SingleChildScrollView(
+                  // Expandable sections
+                  ExpansionTile(
+                    title: const Text('Controls', style: TextStyle(color: Colors.white)),
+                    initiallyExpanded: isControlsExpanded,
+                    onExpansionChanged: (expanded) {
+                      setState(() {
+                        isControlsExpanded = expanded;
+                      });
+                    },
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Consumer<SequencerModel>(
-                              builder: (context, sequencer, child) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Tempo',
-                                      style: TextStyle(color: Colors.white, fontSize: 16),
+                            // Tempo control
+                            const Text(
+                              'Tempo',
+                              style: TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.speed, color: Colors.white, size: 20),
+                                Expanded(
+                                  child: Slider(
+                                    value: _tempo,
+                                    min: 60.0,
+                                    max: 180.0,
+                                    divisions: 120,
+                                    onChanged: (newTempo) {
+                                      setState(() {
+                                        _tempo = newTempo;
+                                        _tempoController.text = newTempo.round().toString();
+                                        _sequencer.updateTempo(newTempo);
+                                      });
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    controller: _tempoController,
+                                    keyboardType: TextInputType.number,
+                                    style: const TextStyle(color: Colors.white),
+                                    decoration: const InputDecoration(
+                                      suffix: Text('BPM', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 4),
                                     ),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.speed, color: Colors.white, size: 20),
-                                        Expanded(
-                                          child: Slider(
-                                            value: _tempo,
-                                            min: 60.0,
-                                            max: 180.0,
-                                            divisions: 120,
-                                            onChanged: (newTempo) {
-                                              setState(() {
-                                                _tempo = newTempo;
-                                                _tempoController.text = newTempo.round().toString();
-                                                sequencer.updateTempo(newTempo);
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: 60,
-                                          child: TextField(
-                                            controller: _tempoController,
-                                            keyboardType: TextInputType.number,
-                                            style: const TextStyle(color: Colors.white),
-                                            decoration: const InputDecoration(
-                                              suffix: Text('BPM', style: TextStyle(color: Colors.white, fontSize: 12)),
-                                              contentPadding: EdgeInsets.symmetric(horizontal: 4),
-                                            ),
-                                            onChanged: _updateTempoFromInput,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    
-                                    const SizedBox(height: 20),
-                                    
-                                    const Text(
-                                      'Volume',
-                                      style: TextStyle(color: Colors.white, fontSize: 16),
-                                    ),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.volume_up, color: Colors.white, size: 20),
-                                        Expanded(
-                                          child: Slider(
-                                            value: _volume,
-                                            min: 0.0,
-                                            max: 1.0,
-                                            divisions: 100,
-                                            onChanged: (newVolume) {
-                                              setState(() {
-                                                _volume = newVolume;
-                                                _volumeController.text = (newVolume * 100).round().toString();
-                                                sequencer.updateVolume(newVolume);
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: 60,
-                                          child: TextField(
-                                            controller: _volumeController,
-                                            keyboardType: TextInputType.number,
-                                            style: const TextStyle(color: Colors.white),
-                                            decoration: const InputDecoration(
-                                              suffix: Text('%', style: TextStyle(color: Colors.white, fontSize: 12)),
-                                              contentPadding: EdgeInsets.symmetric(horizontal: 4),
-                                            ),
-                                            onChanged: _updateVolumeFromInput,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
+                                    onChanged: _updateTempoFromInput,
+                                  ),
+                                ),
+                              ],
                             ),
                             
                             const SizedBox(height: 20),
                             
+                            // Volume control
+                            const Text(
+                              'Volume',
+                              style: TextStyle(color: Colors.white, fontSize: 16),
+                            ),
+                            Row(
+                              children: [
+                                const Icon(Icons.volume_up, color: Colors.white, size: 20),
+                                Expanded(
+                                  child: Slider(
+                                    value: _volume,
+                                    min: 0.0,
+                                    max: 1.0,
+                                    divisions: 100,
+                                    onChanged: (newVolume) {
+                                      setState(() {
+                                        _volume = newVolume;
+                                        _volumeController.text = (newVolume * 100).round().toString();
+                                        _sequencer.updateVolume(newVolume);
+                                      });
+                                    },
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 60,
+                                  child: TextField(
+                                    controller: _volumeController,
+                                    keyboardType: TextInputType.number,
+                                    style: const TextStyle(color: Colors.white),
+                                    decoration: const InputDecoration(
+                                      suffix: Text('%', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 4),
+                                    ),
+                                    onChanged: _updateVolumeFromInput,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Settings section
+                  ExpansionTile(
+                    title: const Text('Settings', style: TextStyle(color: Colors.white)),
+                    initiallyExpanded: isSettingsExpanded,
+                    onExpansionChanged: (expanded) {
+                      setState(() {
+                        isSettingsExpanded = expanded;
+                      });
+                    },
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
                             // Dropdowns section
                             Container(
                               padding: const EdgeInsets.all(8),
@@ -239,10 +308,10 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
                                 ],
                               ),
                             ),
-
+                            
                             const SizedBox(height: 20),
-
-                            // Preferences section with expansion capability
+                            
+                            // Preferences section
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
@@ -252,132 +321,67 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  InkWell(
-                                    onTap: () {
+                                  CheckboxListTile(
+                                    title: const Text('Show Metronome', style: TextStyle(color: Colors.white)),
+                                    value: showMetronome,
+                                    onChanged: (bool? value) {
                                       setState(() {
-                                        isPreferencesExpanded = !isPreferencesExpanded;
+                                        showMetronome = value ?? false;
                                       });
                                     },
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          'Preferences',
-                                          style: TextStyle(color: Colors.white, fontSize: 16),
-                                        ),
-                                        Icon(
-                                          isPreferencesExpanded ? Icons.expand_less : Icons.expand_more,
-                                          color: Colors.white,
-                                        ),
-                                      ],
-                                    ),
                                   ),
-                                  if (isPreferencesExpanded) ...[
-                                    CheckboxListTile(
-                                      title: const Text('Show Metronome', style: TextStyle(color: Colors.white)),
-                                      value: showMetronome,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          showMetronome = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                    CheckboxListTile(
-                                      title: const Text('Show Note Names', style: TextStyle(color: Colors.white)),
-                                      value: showNoteNames,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          showNoteNames = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                    CheckboxListTile(
-                                      title: const Text('Snap to Grid', style: TextStyle(color: Colors.white)),
-                                      value: snapToGrid,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          snapToGrid = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                    CheckboxListTile(
-                                      title: const Text('Loop Playback', style: TextStyle(color: Colors.white)),
-                                      value: loopPlayback,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          loopPlayback = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                    CheckboxListTile(
-                                      title: const Text('Show Chord Suggestions', style: TextStyle(color: Colors.white)),
-                                      value: showChordSuggestions,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          showChordSuggestions = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                    CheckboxListTile(
-                                      title: const Text('Auto Save', style: TextStyle(color: Colors.white)),
-                                      value: autoSave,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          autoSave = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                  ],
+                                  CheckboxListTile(
+                                    title: const Text('Show Note Names', style: TextStyle(color: Colors.white)),
+                                    value: showNoteNames,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        showNoteNames = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  CheckboxListTile(
+                                    title: const Text('Snap to Grid', style: TextStyle(color: Colors.white)),
+                                    value: snapToGrid,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        snapToGrid = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  CheckboxListTile(
+                                    title: const Text('Loop Playback', style: TextStyle(color: Colors.white)),
+                                    value: loopPlayback,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        loopPlayback = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  CheckboxListTile(
+                                    title: const Text('Show Chord Suggestions', style: TextStyle(color: Colors.white)),
+                                    value: showChordSuggestions,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        showChordSuggestions = value ?? false;
+                                      });
+                                    },
+                                  ),
+                                  CheckboxListTile(
+                                    title: const Text('Auto Save', style: TextStyle(color: Colors.white)),
+                                    value: autoSave,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        autoSave = value ?? false;
+                                      });
+                                    },
+                                  ),
                                 ],
                               ),
-                            ),
-                            
-                            const SizedBox(height: 20),
-                            
-                            Consumer<SequencerModel>(
-                              builder: (context, sequencer, child) {
-                                return Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _buildControlButton(
-                                      icon: Icons.first_page,
-                                      color: Colors.blue,
-                                      onPressed: () {
-                                        sequencer.stopSequencer();
-                                        sequencer.currentStep = 0;
-                                      },
-                                    ),
-                                    const SizedBox(width: 20),
-                                    _buildControlButton(
-                                      icon: sequencer.isPlaying ? Icons.pause : Icons.play_arrow,
-                                      color: Colors.green,
-                                      onPressed: () {
-                                        sequencer.isPlaying ? sequencer.stopSequencer() : sequencer.startSequencer();
-                                      },
-                                    ),
-                                    const SizedBox(width: 20),
-                                    _buildControlButton(
-                                      icon: Icons.stop,
-                                      color: Colors.red,
-                                      onPressed: sequencer.stopSequencer,
-                                    ),
-                                    const SizedBox(width: 20),
-                                    _buildControlButton(
-                                      icon: Icons.last_page,
-                                      color: Colors.blue,
-                                      onPressed: () {
-                                        sequencer.stopSequencer();
-                                        sequencer.currentStep = SequencerModel.numSteps - 1;
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
                             ),
                           ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

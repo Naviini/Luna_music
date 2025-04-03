@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../player_screen.dart'; 
-import 'settings_screen.dart';
-import 'EditProfileScreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Authentication package
+import 'settings_screen.dart'; // Link to settings screen
+import 'EditBiographyScreen.dart'; // Link to Edit Biography screen
+import '../../player_screen.dart'; // Link to Music Player
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,18 +13,104 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String name = "Shenon Lekamge";
-  String bio = "Music lover | Producer";
+  String name = "Loading...";
+  String bio = "Loading...";
+  int followers = 0;
+  int following = 0;
 
-  // List of songs
-  final List<Map<String, String>> songs = List.generate(9, (index) {
-    return {
-      "title": "Song ${index + 1}",
-      "artist": "Artist ${index + 1}",
-      "imageUrl": "assets/track${index + 1}.jpg",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${index + 1}.mp3",
-    };
-  });
+  List<Map<String, String>> songs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
+    _fetchSavedTracks();
+  }
+
+  // Fetch user profile data from Firestore
+  Future<void> _fetchUserProfile() async {
+    try {
+      // Get the current logged-in user's ID
+      User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser == null) {
+        throw FirebaseAuthException(code: 'user-not-found', message: 'User is not logged in');
+      }
+
+      // Fetch the user's document from Firestore using their userId
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid) // Get the user document by userId
+          .get();
+
+      if (!userDoc.exists) {
+        throw FirebaseException(code: 'user-not-found', message: 'User profile not found in Firestore', plugin: '');
+      }
+
+      setState(() {
+        name = userDoc['username'] ?? "Name not available";
+        bio = userDoc['bio'] ?? "Bio not available";
+        followers = userDoc['followers'] ?? 0;
+        following = userDoc['following'] ?? 0;
+      });
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        setState(() {
+          name = "Authentication Error";
+          bio = "Please log in again";
+        });
+        print("Authentication error: ${e.message}");
+      } else if (e is FirebaseException) {
+        setState(() {
+          name = "Firestore Error";
+          bio = "Could not fetch profile data";
+        });
+        print("Firestore error: ${e.message}");
+      } else {
+        setState(() {
+          name = "Error loading profile";
+          bio = "Unknown error occurred";
+        });
+        print("Unknown error: $e");
+      }
+    }
+  }
+
+  // Fetch saved tracks from Firestore
+  Future<void> _fetchSavedTracks() async {
+    try {
+      // Get the current logged-in user's ID
+      User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser == null) {
+        throw FirebaseAuthException(code: 'user-not-found', message: 'User is not logged in');
+      }
+
+      // Fetch the user's saved tracks from Firestore
+      final savedTracksSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('saved_tracks') // Assuming saved tracks are stored here
+          .get();
+
+      List<Map<String, String>> fetchedSongs = [];
+      for (var doc in savedTracksSnapshot.docs) {
+        var songData = doc.data();
+        fetchedSongs.add({
+          "title": songData['title'] ?? "Untitled",
+          "artist": songData['artist'] ?? "Unknown Artist",
+          "imageUrl": songData['imageUrl'] ?? "assets/default_image.jpg",
+          "url": songData['url'] ?? "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        });
+      }
+
+      setState(() {
+        songs = fetchedSongs;
+      });
+    } catch (e) {
+      print("Error fetching saved tracks: $e");
+    }
+  }
 
   void _playNextSong(int currentIndex) {
     if (currentIndex < songs.length - 1) {
@@ -39,6 +127,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       );
+    } else {
+      print("No next song available");
     }
   }
 
@@ -57,6 +147,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       );
+    } else {
+      print("No previous song available");
+    }
+  }
+
+  // Update biography in Firestore
+  Future<void> _updateBio(String newBio) async {
+    try {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      // Update the user's bio in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
+        'bio': newBio,
+      });
+
+      setState(() {
+        bio = newBio;
+      });
+    } catch (e) {
+      print("Error updating bio: $e");
     }
   }
 
@@ -135,19 +246,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const EditProfileScreen()),
+                        builder: (context) => const EditBiographyScreen()),
                   );
 
-                  if (result != null && result is Map<String, String>) {
-                    setState(() {
-                      name = result['name'] ?? name;
-                      bio = result['bio'] ?? bio;
-                    });
+                  if (result != null && result is String) {
+                    _updateBio(result);
                   }
                 },
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple),
-                child: const Text("Edit Profile",
+                child: const Text("Edit Biography",
                     style: TextStyle(color: Colors.white)),
               ),
               const SizedBox(width: 10),
@@ -174,7 +282,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
-                    // Navigate to player screen 
                     Navigator.push(
                       context,
                       MaterialPageRoute(

@@ -13,10 +13,12 @@ class LibraryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text('My Library',
-            style: textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-            )),
+        title: Text(
+          'My Library',
+          style: textTheme.headlineSmall?.copyWith(
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: const Color.fromRGBO(43, 20, 72, 1),
         centerTitle: false,
         elevation: 0,
@@ -33,47 +35,19 @@ class LibraryScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildQuickAccess(colorScheme, textTheme),
-            const SizedBox(height: 24),
             _buildSectionHeader("Recently Played", "See All", colorScheme, textTheme),
             const SizedBox(height: 12),
             _buildTrackListFromFirestore(colorScheme, textTheme),
             const SizedBox(height: 24),
             _buildSectionHeader("Your Playlists", "View All", colorScheme, textTheme),
             const SizedBox(height: 12),
-            _buildPlaylistGrid(colorScheme, textTheme),
+            _buildPlaylistListFromFirestore(colorScheme, textTheme),
+            const SizedBox(height: 24),
+            // Add Playlist button
+            _buildAddPlaylistButton(context),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildQuickAccess(ColorScheme colorScheme, TextTheme textTheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildQuickAction(Icons.favorite, "Favorites", colorScheme.error, colorScheme),
-        _buildQuickAction(Icons.download, "Downloads", colorScheme.tertiary, colorScheme),
-        _buildQuickAction(Icons.history, "History", colorScheme.secondary, colorScheme),
-        _buildQuickAction(Icons.add, "Create", colorScheme.primary, colorScheme),
-      ],
-    );
-  }
-
-  Widget _buildQuickAction(IconData icon, String label, Color color, ColorScheme colorScheme) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
-      ],
     );
   }
 
@@ -122,19 +96,19 @@ class LibraryScreen extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: Image.network(
-                        track['image'],
+                        track['image'] ?? '',
                         height: 120,
                         width: 160,
                         fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(track['title'],
+                    Text(track['title'] ?? 'Unknown',
                         style: textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: colorScheme.onSurface,
                         )),
-                    Text(track['artist'],
+                    Text(track['artist'] ?? 'Unknown Artist',
                         style: textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         )),
@@ -148,56 +122,89 @@ class LibraryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaylistGrid(ColorScheme colorScheme, TextTheme textTheme) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.5,
+  Widget _buildPlaylistListFromFirestore(ColorScheme colorScheme, TextTheme textTheme) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirestoreService().getPlaylists(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No playlists found"));
+        }
+
+        return ListView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: snapshot.data!.docs.map((playlist) {
+            List<dynamic> songs = playlist['songs'] ?? []; // Ensure it's always a list
+
+            return ExpansionTile(
+              title: Text(playlist['name'] ?? "Unknown Playlist"),
+              children: songs.map((song) {
+                if (song is Map<String, dynamic>) { // Ensure it's a valid map
+                  return ListTile(
+                    title: Text(song['title'] ?? "Unknown Song"),
+                  );
+                } else {
+                  return const SizedBox(); // Ignore invalid entries
+                }
+              }).toList(),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => FirestoreService().deletePlaylist(playlist.id),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  // Add Playlist button and dialog
+  Widget _buildAddPlaylistButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () => _showAddPlaylistDialog(context),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromRGBO(43, 20, 72, 1),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
-      itemCount: 6,
-      itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: colorScheme.surfaceContainerLowest,
+      child: const Text('Add Playlist'),
+    );
+  }
+
+  // Show dialog to add playlist
+  void _showAddPlaylistDialog(BuildContext context) {
+    final _playlistController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Enter Playlist Name'),
+          content: TextField(
+            controller: _playlistController,
+            decoration: const InputDecoration(hintText: 'Playlist name'),
           ),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    "https://picsum.photos/300/300?random=$index",
-                    fit: BoxFit.cover,
-                    colorBlendMode: BlendMode.darken,
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 12,
-                left: 12,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Playlist ${index + 1}",
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        )),
-                    const SizedBox(height: 4),
-                    Text("${index + 5} tracks",
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onPrimaryContainer.withOpacity(0.8),
-                        )),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                String playlistName = _playlistController.text.trim();
+                if (playlistName.isNotEmpty) {
+                  FirestoreService().addPlaylist(playlistName);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
         );
       },
     );

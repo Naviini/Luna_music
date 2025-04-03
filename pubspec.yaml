@@ -16,7 +16,7 @@ dependencies:
   just_audio: ^0.9.46
   firebase_core: ^3.13.0
   cloud_firestore: ^5.6.6
-  
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

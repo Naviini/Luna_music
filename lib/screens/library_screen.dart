@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -11,21 +13,18 @@ class LibraryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text('My Library', 
+        title: Text('My Library',
             style: textTheme.headlineSmall?.copyWith(
-              // fontWeight: FontWeight.bold,
               color: Colors.white,
             )),
         backgroundColor: const Color.fromRGBO(43, 20, 72, 1),
-        centerTitle: false, 
+        centerTitle: false,
         elevation: 0,
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {
-              
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -34,17 +33,12 @@ class LibraryScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             _buildQuickAccess(colorScheme, textTheme),
             const SizedBox(height: 24),
-            
-            
             _buildSectionHeader("Recently Played", "See All", colorScheme, textTheme),
             const SizedBox(height: 12),
-            _buildHorizontalTrackList(colorScheme, textTheme),
+            _buildTrackListFromFirestore(colorScheme, textTheme),
             const SizedBox(height: 24),
-            
-          
             _buildSectionHeader("Your Playlists", "View All", colorScheme, textTheme),
             const SizedBox(height: 12),
             _buildPlaylistGrid(colorScheme, textTheme),
@@ -54,7 +48,6 @@ class LibraryScreen extends StatelessWidget {
     );
   }
 
-  
   Widget _buildQuickAccess(ColorScheme colorScheme, TextTheme textTheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -95,50 +88,63 @@ class LibraryScreen extends StatelessWidget {
             )),
         TextButton(
           onPressed: () {},
-          child: Text(actionText,
-              style: TextStyle(color: colorScheme.primary, fontSize: 14)),
+          child: Text(actionText, style: TextStyle(color: colorScheme.primary, fontSize: 14)),
         ),
       ],
     );
   }
 
-  Widget _buildHorizontalTrackList(ColorScheme colorScheme, TextTheme textTheme) {
-    return SizedBox(
-      height: 180,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return Container(
-            width: 160,
-            margin: const EdgeInsets.only(right: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    "https://picsum.photos/200/200?random=$index",
-                    height: 120,
-                    width: 160,
-                    fit: BoxFit.cover,
-                  ),
+  Widget _buildTrackListFromFirestore(ColorScheme colorScheme, TextTheme textTheme) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirestoreService().getTracks(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No tracks found"));
+        }
+
+        return SizedBox(
+          height: 180,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: snapshot.data!.docs.length,
+            itemBuilder: (context, index) {
+              var track = snapshot.data!.docs[index];
+              return Container(
+                width: 160,
+                margin: const EdgeInsets.only(right: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        track['image'],
+                        height: 120,
+                        width: 160,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(track['title'],
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
+                        )),
+                    Text(track['artist'],
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        )),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text("Track ${index + 1}",
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    )),
-                Text("Artist ${index + 1}",
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    )),
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -158,14 +164,6 @@ class LibraryScreen extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: colorScheme.surfaceContainerLowest,
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Stack(
             children: [
@@ -175,7 +173,6 @@ class LibraryScreen extends StatelessWidget {
                   child: Image.network(
                     "https://picsum.photos/300/300?random=$index",
                     fit: BoxFit.cover,
-                    color: colorScheme.scrim.withOpacity(0.4),
                     colorBlendMode: BlendMode.darken,
                   ),
                 ),
@@ -205,4 +202,4 @@ class LibraryScreen extends StatelessWidget {
       },
     );
   }
-} 
+}

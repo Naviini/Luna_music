@@ -1,71 +1,3 @@
-// import 'package:flutter/material.dart';
-
-// class LibraryScreen extends StatelessWidget {
-//   const LibraryScreen({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('My Library'),
-//         backgroundColor: Colors.black,
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             const Text(
-//               "Saved Tracks",
-//               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-//             ),
-//             const SizedBox(height: 10),
-//             Expanded(
-//               child: ListView.builder(
-//                 itemCount: 5, // Fetch saved tracks from a database later
-//                 itemBuilder: (context, index) {
-//                   return ListTile(
-//                     leading:
-//                         const Icon(Icons.music_note, color: Colors.deepPurple),
-//                     title: Text('Saved Track ${index + 1}'),
-//                     subtitle: Text('Artist ${index + 1}'),
-//                     onTap: () {
-//                       // Play saved track
-//                     },
-//                   );
-//                 },
-//               ),
-//             ),
-//             const SizedBox(height: 20),
-//             const Text(
-//               "My Playlists",
-//               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-//             ),
-//             const SizedBox(height: 10),
-//             Expanded(
-//               child: ListView.builder(
-//                 itemCount:
-//                     3, // Fetch user-created playlists from a database later
-//                 itemBuilder: (context, index) {
-//                   return ListTile(
-//                     leading: const Icon(Icons.playlist_play,
-//                         color: Colors.deepPurple),
-//                     title: Text('Playlist ${index + 1}'),
-//                     subtitle: Text('Created on ${DateTime.now().year}'),
-//                     onTap: () {
-//                       // Navigate to playlist details
-//                     },
-//                   );
-//                 },
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 
 class LibraryScreen extends StatelessWidget {
@@ -73,82 +5,204 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('My Library', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.black,
-        centerTitle: true,
+        title: Text('My Library', 
+            style: textTheme.headlineSmall?.copyWith(
+              // fontWeight: FontWeight.bold,
+              color: Colors.white,
+            )),
+        backgroundColor: const Color.fromRGBO(43, 20, 72, 1),
+        centerTitle: false, 
+        elevation: 0,
+        automaticallyImplyLeading: false, 
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () {
+              
+            },
+          ),
+        ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            sectionTitle("Saved Tracks"),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 5, // Fetch saved tracks from a database later
-                itemBuilder: (context, index) {
-                  return trackCard(index);
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-            sectionTitle("My Playlists"),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 3, // Fetch user-created playlists from a database later
-                itemBuilder: (context, index) {
-                  return playlistCard(index);
-                },
-              ),
-            ),
+            
+            _buildQuickAccess(colorScheme, textTheme),
+            const SizedBox(height: 24),
+            
+            
+            _buildSectionHeader("Recently Played", "See All", colorScheme, textTheme),
+            const SizedBox(height: 12),
+            _buildHorizontalTrackList(colorScheme, textTheme),
+            const SizedBox(height: 24),
+            
+          
+            _buildSectionHeader("Your Playlists", "View All", colorScheme, textTheme),
+            const SizedBox(height: 12),
+            _buildPlaylistGrid(colorScheme, textTheme),
           ],
         ),
       ),
     );
   }
 
-  Widget sectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+  
+  Widget _buildQuickAccess(ColorScheme colorScheme, TextTheme textTheme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _buildQuickAction(Icons.favorite, "Favorites", colorScheme.error, colorScheme),
+        _buildQuickAction(Icons.download, "Downloads", colorScheme.tertiary, colorScheme),
+        _buildQuickAction(Icons.history, "History", colorScheme.secondary, colorScheme),
+        _buildQuickAction(Icons.add, "Create", colorScheme.primary, colorScheme),
+      ],
     );
   }
 
-  Widget trackCard(int index) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        leading: const Icon(Icons.music_note, color: Colors.deepPurple, size: 30),
-        title: Text('Saved Track ${index + 1}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-        subtitle: Text('Artist ${index + 1}', style: const TextStyle(color: Colors.grey)),
-        trailing: const Icon(Icons.play_arrow, color: Colors.black),
-        onTap: () {
-          // Play saved track
+  Widget _buildQuickAction(IconData icon, String label, Color color, ColorScheme colorScheme) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String actionText, ColorScheme colorScheme, TextTheme textTheme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            )),
+        TextButton(
+          onPressed: () {},
+          child: Text(actionText,
+              style: TextStyle(color: colorScheme.primary, fontSize: 14)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHorizontalTrackList(ColorScheme colorScheme, TextTheme textTheme) {
+    return SizedBox(
+      height: 180,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Container(
+            width: 160,
+            margin: const EdgeInsets.only(right: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    "https://picsum.photos/200/200?random=$index",
+                    height: 120,
+                    width: 160,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text("Track ${index + 1}",
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    )),
+                Text("Artist ${index + 1}",
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    )),
+              ],
+            ),
+          );
         },
       ),
     );
   }
 
-  Widget playlistCard(int index) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        leading: const Icon(Icons.playlist_play, color: Colors.deepPurple, size: 30),
-        title: Text('Playlist ${index + 1}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-        subtitle: Text('Created on ${DateTime.now().year}', style: const TextStyle(color: Colors.grey)),
-        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
-        onTap: () {
-          // Navigate to playlist details
-        },
+  Widget _buildPlaylistGrid(ColorScheme colorScheme, TextTheme textTheme) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.5,
       ),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: colorScheme.surfaceContainerLowest,
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    "https://picsum.photos/300/300?random=$index",
+                    fit: BoxFit.cover,
+                    color: colorScheme.scrim.withOpacity(0.4),
+                    colorBlendMode: BlendMode.darken,
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 12,
+                left: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Playlist ${index + 1}",
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        )),
+                    const SizedBox(height: 4),
+                    Text("${index + 5} tracks",
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
-}
+} 

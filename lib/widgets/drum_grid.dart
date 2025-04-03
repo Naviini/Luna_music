@@ -53,17 +53,28 @@ class DrumGrid extends StatelessWidget {
             for (int i = 0; i < 4; i++) // 4 drum types: Kick, Snare, Hi-hat, Clap
               Row(
                 children: [
-                  // Drum label
+                  // Drum label with icon
                   Container(
                     width: 60,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     alignment: Alignment.centerRight,
-                    child: Text(
-                      _getDrumLabel(i),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          _getDrumIcon(i),
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _getDrumLabel(i),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   // Grid cells
@@ -84,7 +95,13 @@ class DrumGrid extends StatelessWidget {
                         bool isQuarterNote = step % 4 == 0;
 
                         return GestureDetector(
-                          onTap: () => sequencer.toggleNote(index),
+                          onTap: () {
+                            sequencer.toggleNote(index);
+                            // Preview the sound when tapping
+                            if (activeLayer.grid[index]) {
+                              sequencer.playDrum(sequencer.drums[i], activeLayer.volume);
+                            }
+                          },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 100),
                             decoration: BoxDecoration(
@@ -138,15 +155,30 @@ class DrumGrid extends StatelessWidget {
     }
   }
 
+  IconData _getDrumIcon(int index) {
+    switch (index) {
+      case 0: // Kick
+        return Icons.music_note;
+      case 1: // Snare
+        return Icons.music_note;
+      case 2: // Hi-hat
+        return Icons.music_note;
+      case 3: // Clap
+        return Icons.music_note;
+      default:
+        return Icons.music_note;
+    }
+  }
+
   Color _getDrumColor(int index) {
     switch (index) {
-      case 0:
+      case 0: // Kick
         return Colors.red.shade400;
-      case 1:
+      case 1: // Snare
         return Colors.green.shade400;
-      case 2:
+      case 2: // Hi-hat
         return Colors.yellow.shade400;
-      case 3:
+      case 3: // Clap
         return Colors.purple.shade400;
       default:
         return Colors.blue.shade400;

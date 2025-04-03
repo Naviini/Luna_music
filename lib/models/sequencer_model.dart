@@ -254,6 +254,16 @@ class SequencerModel extends ChangeNotifier {
     }
   }
 
+  // Add clearLayerGrid method
+  void clearLayerGrid(int index) {
+    if (index >= 0 && index < layers.length) {
+      for (int i = 0; i < layers[index].grid.length; i++) {
+        layers[index].grid[i] = false;
+      }
+      notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     _ticker.dispose();

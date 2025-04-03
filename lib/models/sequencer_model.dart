@@ -40,7 +40,13 @@ class SequencerModel extends ChangeNotifier {
   String currentNote = 'C3';
 
   final Map<String, String> noteToSound = {};
-  final Map<String, String> drumToSound = {};
+  final Map<String, String> drumToSound = {
+    'kick': 'drum/R8-Kick-1.wav',
+    'snare': 'drum/R8-Snare-1.wav',
+    'hihat': 'drum/R8-Cl-Hi-Hat.wav',
+    'clap': 'drum/R8-808-1.wav',
+  };
+  
   final List<String> notes = [
     'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3', 'C4', 'C#4', 'D4', 'D#4'
   ];
@@ -62,7 +68,6 @@ class SequencerModel extends ChangeNotifier {
     // Initialize with a default layer
     addLayer('Layer 1', 'Piano');
     _updateInstrumentSounds();
-    _updateDrumSounds();
   }
 
   void _playCurrentStep() {
@@ -81,7 +86,7 @@ class SequencerModel extends ChangeNotifier {
       for (int i = 0; i < numDrums; i++) {
         int index = currentStep + ((numNotes + i) * numSteps);
         if (layer.grid[index]) {
-          _playDrum(drums[i], layer.volume);
+          playDrum(drums[i], layer.volume);
         }
       }
     }
@@ -145,7 +150,7 @@ class SequencerModel extends ChangeNotifier {
           _playNote(layers[activeLayerIndex].instrument, notes[index ~/ numSteps], layers[activeLayerIndex].volume);
         } else {
           int drumIndex = (index ~/ numSteps) - numNotes;
-          _playDrum(drums[drumIndex], layers[activeLayerIndex].volume);
+          playDrum(drums[drumIndex], layers[activeLayerIndex].volume);
         }
       }
     }
@@ -161,7 +166,7 @@ class SequencerModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _playDrum(String drum, double layerVolume) async {
+  Future<void> playDrum(String drum, double layerVolume) async {
     if (!drumToSound.containsKey(drum)) return;
     try {
       await _audioPlayer.setVolume((volume / 100) * (layerVolume / 100));
@@ -237,13 +242,6 @@ class SequencerModel extends ChangeNotifier {
     String path = selectedInstrument.toLowerCase();
     for (String note in notes) {
       noteToSound[note] = '$path/$note.mp3';
-    }
-  }
-
-  void _updateDrumSounds() {
-    drumToSound.clear();
-    for (String drum in drums) {
-      drumToSound[drum] = 'drums/$drum.mp3';
     }
   }
 

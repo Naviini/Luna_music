@@ -80,6 +80,31 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
     );
   }
 
+  void _showRemoveLayerDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Remove Layer'),
+          content: Text('Are you sure you want to remove ${_sequencerModel.layers[index].name}?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                _sequencerModel.removeLayer(index);
+                Navigator.pop(context);
+              },
+              child: const Text('Remove'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
@@ -128,6 +153,13 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
                                           layer.name,
                                           style: const TextStyle(color: Colors.white),
                                         ),
+                                        if (sequencer.layers.length > 1) // Only show remove button if more than one layer
+                                          IconButton(
+                                            icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                                            onPressed: () => _showRemoveLayerDialog(index),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                          ),
                                       ],
                                     ),
                                   ),

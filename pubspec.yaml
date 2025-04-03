@@ -72,6 +72,23 @@ flutter:
     - assets/violin/C#4.mp3
     - assets/violin/D4.mp3
     - assets/violin/D#4.mp3
+    - assets/drum/R8-808-1.wav
+    - assets/drum/R8-Cl-Hi-Hat.wav
+    - assets/drum/R8-Conga.wav
+    - assets/drum/R8-Crash.wav
+    - assets/drum/R8-Hi-Tom.wav
+    - assets/drum/R8-Kick-1.wav
+    - assets/drum/R8-Kick-2.wav
+    - assets/drum/R8-Low-Tom.wav
+    - assets/drum/R8-Open-Hi-Hat.wav
+    - assets/drum/R8-Perc-1.wav
+    - assets/drum/R8-Perc-4.wav
+    - assets/drum/R8-Ride.wav
+    - assets/drum/R8-Snare-1.wav
+    - assets/drum/R8-Snare-2.wav
+    - assets/drum/R8-Snare-3.wav
+    - assets/drum/R8-Snare-4.wav
+    - assets/drum/R8-Snare-5.wav
     - assets/profile.png
     - assets/track1.jpg
     - assets/track2.jpg

@@ -7,6 +7,17 @@ class SequencerGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SequencerModel>(
       builder: (context, sequencer, child) {
+        if (sequencer.layers.isEmpty) {
+          return const Center(
+            child: Text(
+              'Add a layer to start creating music',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        final activeLayer = sequencer.layers[sequencer.activeLayerIndex];
+        
         return SizedBox(
           height: MediaQuery.of(context).size.height * 0.7,
           child: SingleChildScrollView(
@@ -83,7 +94,7 @@ class SequencerGrid extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: sequencer.isPlaying && isPlayingStep
                                       ? Colors.orange.withOpacity(0.7)
-                                      : sequencer.grid[index]
+                                      : activeLayer.grid[index]
                                           ? Colors.blue.shade400
                                           : isQuarterNote
                                               ? Colors.grey[700]
@@ -93,7 +104,7 @@ class SequencerGrid extends StatelessWidget {
                                     color: isQuarterNote ? Colors.white24 : Colors.transparent,
                                     width: 1,
                                   ),
-                                  boxShadow: sequencer.grid[index]
+                                  boxShadow: activeLayer.grid[index]
                                       ? [
                                           BoxShadow(
                                             color: Colors.blue.withOpacity(0.3),

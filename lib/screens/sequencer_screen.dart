@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:luna/screens/sequencer_grid_screen.dart'; 
 // import 'dart:convert';
 // import 'package:flutter/services.dart';
 // import '../track_loader.dart';
 import 'package:luna/track_loader.dart';
 import '../template_loader.dart';
+import '../models/sequencer_model.dart';
 import 'settings_screen.dart'; // Import the new settings screen
 
 class SequencerScreen extends StatelessWidget {
@@ -98,7 +100,7 @@ class SequencerScreen extends StatelessWidget {
                             crossAxisSpacing: 20, // Space between columns
                             padding: const EdgeInsets.all(16),
                             shrinkWrap: true, // Allow the grid to take only the needed space
-                            physics: NeverScrollableScrollPhysics(), // Disable scrolling
+                            physics: const NeverScrollableScrollPhysics(), // Disable scrolling
                             children: [
                               _buildFeatureButton(
                                 context,
@@ -107,7 +109,9 @@ class SequencerScreen extends StatelessWidget {
                                 () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => SequencerGridScreen()),
+                                    MaterialPageRoute(
+                                      builder: (context) => const SequencerGridScreen(),
+                                    ),
                                   );
                                 },
                               ),

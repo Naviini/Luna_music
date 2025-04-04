@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
      required this.onNext,
      required this.onPrevious,
    });
- 
+  
    @override
    _MusicPlayerPageState createState() => _MusicPlayerPageState();
  }

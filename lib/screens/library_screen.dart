@@ -142,6 +142,10 @@ class LibraryScreen extends StatelessWidget {
 
             return ExpansionTile(
               title: Text(playlist['name'] ?? "Unknown Playlist"),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () => FirestoreService().deletePlaylist(playlist.id),
+              ),
               children: songs.map((song) {
                 if (song is Map<String, dynamic>) { // Ensure it's a valid map
                   return ListTile(
@@ -151,10 +155,6 @@ class LibraryScreen extends StatelessWidget {
                   return const SizedBox(); // Ignore invalid entries
                 }
               }).toList(),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => FirestoreService().deletePlaylist(playlist.id),
-              ),
             );
           }).toList(),
         );
@@ -176,7 +176,7 @@ class LibraryScreen extends StatelessWidget {
 
   // Show dialog to add playlist
   void _showAddPlaylistDialog(BuildContext context) {
-    final _playlistController = TextEditingController();
+    final playlistController = TextEditingController();
 
     showDialog(
       context: context,
@@ -184,7 +184,7 @@ class LibraryScreen extends StatelessWidget {
         return AlertDialog(
           title: const Text('Enter Playlist Name'),
           content: TextField(
-            controller: _playlistController,
+            controller: playlistController,
             decoration: const InputDecoration(hintText: 'Playlist name'),
           ),
           actions: [
@@ -196,7 +196,7 @@ class LibraryScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                String playlistName = _playlistController.text.trim();
+                String playlistName = playlistController.text.trim();
                 if (playlistName.isNotEmpty) {
                   FirestoreService().addPlaylist(playlistName);
                   Navigator.of(context).pop();

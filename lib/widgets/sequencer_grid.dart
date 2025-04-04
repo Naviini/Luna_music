@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/sequencer_model.dart';
 
 class SequencerGrid extends StatelessWidget {
+  const SequencerGrid({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Consumer<SequencerModel>(
@@ -26,7 +28,7 @@ class SequencerGrid extends StatelessWidget {
                 // Header row showing beat numbers
                 Row(
                   children: [
-                    SizedBox(width: 60), // Space for note labels
+                    const SizedBox(width: 60), // Space for note labels
                     Expanded(
                       child: GridView.builder(
                         shrinkWrap: true,

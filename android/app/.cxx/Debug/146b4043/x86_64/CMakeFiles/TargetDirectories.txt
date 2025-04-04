@@ -1,0 +1,2 @@
+C:/Users/Sheran/Documents/GitHub/Luna_music/android/app/.cxx/Debug/146b4043/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/Sheran/Documents/GitHub/Luna_music/android/app/.cxx/Debug/146b4043/x86_64/CMakeFiles/rebuild_cache.dir

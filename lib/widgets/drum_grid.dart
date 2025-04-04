@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/sequencer_model.dart';
 
 class DrumGrid extends StatelessWidget {
+  const DrumGrid({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Consumer<SequencerModel>(
@@ -23,7 +25,7 @@ class DrumGrid extends StatelessWidget {
             // Header row showing beat numbers
             Row(
               children: [
-                SizedBox(width: 60), // Space for drum labels
+                const SizedBox(width: 60), // Space for drum labels
                 Expanded(
                   child: GridView.builder(
                     shrinkWrap: true,

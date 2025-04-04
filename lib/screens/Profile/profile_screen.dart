@@ -313,7 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           image: DecorationImage(
-                            image: AssetImage(songs[index]["imageUrl"]!),
+                            image: NetworkImage(songs[index]["imageUrl"]!), // Use NetworkImage instead of AssetImage
                             fit: BoxFit.cover,
                           ),
                         ),

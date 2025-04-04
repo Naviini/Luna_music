@@ -43,7 +43,6 @@ class LibraryScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildPlaylistListFromFirestore(colorScheme, textTheme),
             const SizedBox(height: 24),
-            // Add Playlist button
             _buildAddPlaylistButton(context),
           ],
         ),
@@ -55,14 +54,21 @@ class LibraryScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            )),
+        Text(
+          title,
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onSurface,
+          ),
+        ),
         TextButton(
-          onPressed: () {},
-          child: Text(actionText, style: TextStyle(color: colorScheme.primary, fontSize: 14)),
+          onPressed: () {
+            // Optional: Add navigation to full track or playlist view
+          },
+          child: Text(
+            actionText,
+            style: TextStyle(color: colorScheme.primary, fontSize: 14),
+          ),
         ),
       ],
     );
@@ -100,18 +106,26 @@ class LibraryScreen extends StatelessWidget {
                         height: 120,
                         width: 160,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(color: Colors.grey, height: 120, width: 160),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(track['title'] ?? 'Unknown',
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
-                        )),
-                    Text(track['artist'] ?? 'Unknown Artist',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        )),
+                    Text(
+                      track['title'] ?? 'Unknown',
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      track['artist'] ?? 'Unknown Artist',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               );
@@ -138,21 +152,27 @@ class LibraryScreen extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: snapshot.data!.docs.map((playlist) {
-            List<dynamic> songs = playlist['songs'] ?? []; // Ensure it's always a list
+            List<dynamic> songs = playlist['songs'] ?? [];
 
             return ExpansionTile(
-              title: Text(playlist['name'] ?? "Unknown Playlist"),
+              title: Text(
+                playlist['name'] ?? "Unknown Playlist",
+                style: textTheme.titleSmall,
+              ),
               trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () => FirestoreService().deletePlaylist(playlist.id),
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  FirestoreService().deletePlaylist(playlist.id);
+                },
               ),
               children: songs.map((song) {
-                if (song is Map<String, dynamic>) { // Ensure it's a valid map
+                if (song is Map<String, dynamic>) {
                   return ListTile(
                     title: Text(song['title'] ?? "Unknown Song"),
+                    leading: const Icon(Icons.music_note),
                   );
                 } else {
-                  return const SizedBox(); // Ignore invalid entries
+                  return const SizedBox.shrink();
                 }
               }).toList(),
             );
@@ -162,19 +182,18 @@ class LibraryScreen extends StatelessWidget {
     );
   }
 
-  // Add Playlist button and dialog
   Widget _buildAddPlaylistButton(BuildContext context) {
-    return ElevatedButton(
+    return ElevatedButton.icon(
       onPressed: () => _showAddPlaylistDialog(context),
+      icon: const Icon(Icons.playlist_add),
+      label: const Text('Add Playlist'),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color.fromRGBO(43, 20, 72, 1),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
-      child: const Text('Add Playlist'),
     );
   }
 
-  // Show dialog to add playlist
   void _showAddPlaylistDialog(BuildContext context) {
     final playlistController = TextEditingController();
 
@@ -189,16 +208,14 @@ class LibraryScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                String playlistName = playlistController.text.trim();
-                if (playlistName.isNotEmpty) {
-                  FirestoreService().addPlaylist(playlistName);
+                final name = playlistController.text.trim();
+                if (name.isNotEmpty) {
+                  FirestoreService().addPlaylist(name);
                   Navigator.of(context).pop();
                 }
               },

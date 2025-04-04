@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore packa
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Authentication package
 import 'settings_screen.dart'; // Link to settings screen
 import 'EditBiographyScreen.dart'; // Link to Edit Biography screen
-import '../../player_screen.dart'; // Link to Music Player
+import '../../services/app_player_state.dart'; // Import AppPlayerState for music playback
+import 'package:provider/provider.dart'; // To use Provider for AppPlayerState
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -131,40 +132,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _playNextSong(int currentIndex) {
+  // Play the next song using AppPlayerState
+  void _playNextSong(int currentIndex, BuildContext context) {
     if (currentIndex < songs.length - 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MusicPlayerPage(
-            title: songs[currentIndex + 1]["title"]!,
-            artist: songs[currentIndex + 1]["artist"]!,
-            imageUrl: songs[currentIndex + 1]["imageUrl"]!,
-            url: songs[currentIndex + 1]["url"]!,
-            onNext: () => _playNextSong(currentIndex + 1),
-            onPrevious: () => _playPreviousSong(currentIndex + 1),
-          ),
-        ),
+      final appPlayer = Provider.of<AppPlayerState>(context, listen: false);
+      appPlayer.play(
+        songs[currentIndex + 1]["title"]!,
+        songs[currentIndex + 1]["artist"]!,
+        songs[currentIndex + 1]["imageUrl"]!,
+        songs[currentIndex + 1]["url"]!,
+        onNext: () => _playNextSong(currentIndex + 1, context),
+        onPrevious: () => _playPreviousSong(currentIndex + 1, context),
       );
     } else {
       print("No next song available");
     }
   }
 
-  void _playPreviousSong(int currentIndex) {
+  // Play the previous song using AppPlayerState
+  void _playPreviousSong(int currentIndex, BuildContext context) {
     if (currentIndex > 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MusicPlayerPage(
-            title: songs[currentIndex - 1]["title"]!,
-            artist: songs[currentIndex - 1]["artist"]!,
-            imageUrl: songs[currentIndex - 1]["imageUrl"]!,
-            url: songs[currentIndex - 1]["url"]!,
-            onNext: () => _playNextSong(currentIndex - 1),
-            onPrevious: () => _playPreviousSong(currentIndex - 1),
-          ),
-        ),
+      final appPlayer = Provider.of<AppPlayerState>(context, listen: false);
+      appPlayer.play(
+        songs[currentIndex - 1]["title"]!,
+        songs[currentIndex - 1]["artist"]!,
+        songs[currentIndex - 1]["imageUrl"]!,
+        songs[currentIndex - 1]["url"]!,
+        onNext: () => _playNextSong(currentIndex - 1, context),
+        onPrevious: () => _playPreviousSong(currentIndex - 1, context),
       );
     } else {
       print("No previous song available");
@@ -301,18 +296,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MusicPlayerPage(
-                          title: songs[index]["title"]!,
-                          artist: songs[index]["artist"]!,
-                          imageUrl: songs[index]["imageUrl"]!,
-                          url: songs[index]["url"]!,
-                          onNext: () => _playNextSong(index),
-                          onPrevious: () => _playPreviousSong(index),
-                        ),
-                      ),
+                    final appPlayer = Provider.of<AppPlayerState>(context, listen: false);
+                    appPlayer.play(
+                      songs[index]["title"]!,
+                      songs[index]["artist"]!,
+                      songs[index]["imageUrl"]!,
+                      songs[index]["url"]!,
+                      onNext: () => _playNextSong(index, context),
+                      onPrevious: () => _playPreviousSong(index, context),
                     );
                   },
                   child: Stack(
@@ -322,7 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           image: DecorationImage(
-                            image: AssetImage(songs[index]["imageUrl"]!),
+                            image: NetworkImage(songs[index]["imageUrl"]!), // Use NetworkImage instead of AssetImage
                             fit: BoxFit.cover,
                           ),
                         ),

@@ -86,29 +86,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
         throw FirebaseAuthException(code: 'user-not-found', message: 'User is not logged in');
       }
 
-      // Fetch the user's saved tracks from Firestore
+      // Fetch the user's saved tracks from Firestore using their userId
       final savedTracksSnapshot = await FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser.uid)
-          .collection('saved_tracks') // Assuming saved tracks are stored here
+          .doc(currentUser.uid) // Use the user's ID to access their document
+          .collection('saved_tracks') // Saved tracks should be stored here
           .get();
+
+      if (savedTracksSnapshot.docs.isEmpty) {
+        print("No saved tracks found for this user.");
+        setState(() {
+          songs = [];
+        });
+        return;
+      }
 
       List<Map<String, String>> fetchedSongs = [];
       for (var doc in savedTracksSnapshot.docs) {
         var songData = doc.data();
         fetchedSongs.add({
-          "title": songData['title'] ?? "Untitled",
+          "title": songData['title'] ?? "Untitled", // Provide default values if data is missing
           "artist": songData['artist'] ?? "Unknown Artist",
-          "imageUrl": songData['imageUrl'] ?? "assets/default_image.jpg",
-          "url": songData['url'] ?? "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+          "imageUrl": songData['image'] ?? "assets/default_image.jpg", // Default image if none exists
+          "url": songData['songUrl'] ?? "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Default URL if none exists
         });
       }
 
       setState(() {
-        songs = fetchedSongs;
+        songs = fetchedSongs; // Update the state with fetched songs
       });
     } catch (e) {
       print("Error fetching saved tracks: $e");
+      setState(() {
+        songs = []; // Clear any existing data if there's an error
+      });
+
+      if (e is FirebaseAuthException) {
+        print("Authentication error: ${e.message}");
+      } else if (e is FirebaseException) {
+        print("Firestore error: ${e.message}");
+      } else {
+        print("Unknown error: $e");
+      }
     }
   }
 

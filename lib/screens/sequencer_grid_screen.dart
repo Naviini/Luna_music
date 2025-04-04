@@ -143,6 +143,196 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
     );
   }
 
+  void _showSaveTrackDialog() {
+    String trackName = _sequencerModel.currentTrackName;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Save Track',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: TextField(
+            controller: TextEditingController(text: trackName),
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              labelText: 'Track Name',
+              labelStyle: TextStyle(color: Colors.white70),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white70),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+            onChanged: (value) => trackName = value,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (trackName.isNotEmpty) {
+                  await _sequencerModel.saveSequence(trackName: trackName);
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Track "$trackName" saved successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text(
+                'Save',
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLoadTrackDialog() async {
+    final tracks = await _sequencerModel.getSavedTracks();
+    if (!mounted) return;
+
+    if (tracks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No saved tracks found'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Load Track',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: tracks.length,
+              itemBuilder: (context, index) {
+                final track = tracks[index];
+                return ListTile(
+                  title: Text(
+                    track['name'] ?? 'Untitled',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    'Last modified: ${DateTime.parse(track['lastModified'] ?? DateTime.now().toIso8601String()).toString().split('.')[0]}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _showDeleteTrackDialog(track['name'] ?? ''),
+                  ),
+                  onTap: () async {
+                    final success = await _sequencerModel.loadTrack(track['name'] ?? '');
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success
+                                ? 'Track "${track['name']}" loaded successfully'
+                                : 'Failed to load track "${track['name']}"',
+                          ),
+                          backgroundColor: success ? Colors.green : Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteTrackDialog(String trackName) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Delete Track',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'Are you sure you want to delete "$trackName"?\nThis action cannot be undone.',
+            style: const TextStyle(color: Colors.white),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                final success = await _sequencerModel.deleteTrack(trackName);
+                if (mounted) {
+                  Navigator.pop(context); // Close delete dialog
+                  Navigator.pop(context); // Close load dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? 'Track "$trackName" deleted successfully'
+                            : 'Failed to delete track "$trackName"',
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                  // Refresh the load dialog
+                  _showLoadTrackDialog();
+                }
+              },
+              child: Text(
+                'Delete',
+                style: TextStyle(color: Colors.red[300]),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
@@ -308,6 +498,34 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
                       ),
                     ),
                   ),
+                  // Add these buttons before the Controls section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.save),
+                          label: const Text('Save Track'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[700],
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => _showSaveTrackDialog(),
+                        ),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.folder_open),
+                          label: const Text('Load Track'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[700],
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => _showLoadTrackDialog(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   // Controls section
                   ExpansionTile(
                     title: const Text(

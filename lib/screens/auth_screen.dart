@@ -23,6 +23,7 @@ class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController usernameController = TextEditingController();
   bool isLogin = true; // Toggle between login and register mode
   bool isLoading = false;
+  bool isPasswordVisible = false; // Toggle password visibility
   File? profileImage;
 
   final ImagePicker _picker = ImagePicker();
@@ -50,6 +51,13 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  // Remove profile image
+  void _removeProfileImage() {
+    setState(() {
+      profileImage = null;
+    });
+  }
+
   // Upload image to Imgur and return the URL
   Future<String> _uploadToImgur(File image) async {
     final url = Uri.parse('https://api.imgur.com/3/upload');
@@ -72,17 +80,29 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _authenticate() async {
     setState(() => isLoading = true);
     try {
-      UserCredential userCredential;
-
       if (isLogin) {
         // Login logic
-        userCredential = await _auth.signInWithEmailAndPassword(
+        await _auth.signInWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
       } else {
-        // Register logic
-        userCredential = await _auth.createUserWithEmailAndPassword(
+        // Register logic with validation
+        if (usernameController.text.isEmpty || emailController.text.isEmpty || passwordController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('All fields are required.')),
+          );
+          return;
+        }
+
+        if (!RegExp(r"^[a-zA-Z0-9]+$").hasMatch(usernameController.text)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Username should only contain letters and numbers.')),
+          );
+          return;
+        }
+
+        final userCredential = await _auth.createUserWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
@@ -90,7 +110,6 @@ class _AuthScreenState extends State<AuthScreen> {
         // Upload profile picture and store the download URL (if an image is selected)
         String profileImageUrl = 'assets/defaultProfile.png'; // Default image
         if (profileImage != null) {
-          // Upload to Imgur and get the URL
           profileImageUrl = await _uploadToImgur(profileImage!);
         }
 
@@ -127,16 +146,18 @@ class _AuthScreenState extends State<AuthScreen> {
       appBar: AppBar(title: Text(isLogin ? 'Login' : 'Register')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: ListView(
           children: [
-            if (!isLogin)
-              // Username field
+            if (!isLogin) ...[
+              // Username field with validation
               TextField(
                 controller: usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  errorText: usernameController.text.isEmpty ? 'Username cannot be empty' : null,
+                ),
               ),
-            if (!isLogin)
+              const SizedBox(height: 10),
               // Profile image picker
               GestureDetector(
                 onTap: _pickProfileImage,
@@ -150,22 +171,46 @@ class _AuthScreenState extends State<AuthScreen> {
                       : null,
                 ),
               ),
+              if (profileImage != null)
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: _removeProfileImage,
+                ),
+            ],
+            const SizedBox(height: 20),
+            // Email field
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
             ),
+            const SizedBox(height: 10),
+            // Password field with show/hide functionality
             TextField(
               controller: passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isPasswordVisible = !isPasswordVisible;
+                    });
+                  },
+                ),
+              ),
+              obscureText: !isPasswordVisible,
             ),
             const SizedBox(height: 20),
             isLoading
-                ? const CircularProgressIndicator()
+                ? const Center(child: CircularProgressIndicator())
                 : ElevatedButton(
                     onPressed: _authenticate,
                     child: Text(isLogin ? 'Login' : 'Register'),
                   ),
+            const SizedBox(height: 10),
             TextButton(
               onPressed: () {
                 setState(() {

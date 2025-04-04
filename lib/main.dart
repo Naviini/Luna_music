@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:luna/firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
@@ -8,12 +7,8 @@ import 'screens/explore_screen.dart';
 import 'screens/sequencer_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/Profile/profile_screen.dart';
-
 import 'services/app_player_state.dart';
 import 'widgets/music_player_wrapper.dart';
-
-import 'models/sequencer_model.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,24 +19,12 @@ void main() async {
 }
 
 class MusicSequencerApp extends StatelessWidget {
-
-class MusicSequencerApp extends StatefulWidget {
-
   const MusicSequencerApp({super.key});
 
   @override
-  State<MusicSequencerApp> createState() => _MusicSequencerAppState();
-}
-
-class _MusicSequencerAppState extends State<MusicSequencerApp> with TickerProviderStateMixin {
-  @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-
       create: (context) => AppPlayerState(),
-
-      create: (context) => SequencerModel(tickerProvider: this),
-
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Music Sequencer',
@@ -63,14 +46,10 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-
   State<MainScreen> createState() => _MainScreenState();
-
-  _MainScreenState createState() => _MainScreenState();
-
 }
 
-class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
+class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
@@ -83,7 +62,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: MusicPlayerWrapper(
         child: _screens[_currentIndex],
@@ -98,42 +76,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Library'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-
-    return ChangeNotifierProvider(
-      create: (context) => SequencerModel(tickerProvider: this),
-      child: Scaffold(
-        body: _screens[_currentIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.explore),
-              label: 'Explore',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.add_box),
-              label: 'Create',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.library_music),
-              label: 'Library',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-        ),
-
       ),
     );
   }

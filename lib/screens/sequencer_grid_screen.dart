@@ -111,9 +111,9 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.grey[900],
-          title: Text(
+          title: const Text(
             'Clear Grid',
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.white),
           ),
           content: Text(
             'Are you sure you want to clear all notes from ${_sequencerModel.layers[index].name}?\nThis action cannot be undone.',
@@ -154,20 +154,39 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
             'Save Track',
             style: TextStyle(color: Colors.white),
           ),
-          content: TextField(
-            controller: TextEditingController(text: trackName),
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              labelText: 'Track Name',
-              labelStyle: TextStyle(color: Colors.white70),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.white70),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: TextEditingController(text: trackName),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Track Name',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white70),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                ),
+                onChanged: (value) => trackName = value,
               ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
+              const SizedBox(height: 16),
+              Text(
+                'Track will be saved with the following settings:',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
-            ),
-            onChanged: (value) => trackName = value,
+              const SizedBox(height: 8),
+              Text(
+                '• Tempo: ${_sequencerModel.tempo.round()} BPM\n'
+                '• Key: ${_sequencerModel.currentTrackMetadata['key']}\n'
+                '• Scale: ${_sequencerModel.currentTrackMetadata['scale']}\n'
+                '• Rhythm: ${_sequencerModel.currentTrackMetadata['rhythm']}\n'
+                '• Layers: ${_sequencerModel.layers.length}',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -220,61 +239,127 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: const Text(
-            'Load Track',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: tracks.length,
-              itemBuilder: (context, index) {
-                final track = tracks[index];
-                return ListTile(
-                  title: Text(
-                    track['name'] ?? 'Untitled',
-                    style: const TextStyle(color: Colors.white),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Colors.grey[900],
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Load Track',
+                    style: TextStyle(color: Colors.white),
                   ),
-                  subtitle: Text(
-                    'Last modified: ${DateTime.parse(track['lastModified'] ?? DateTime.now().toIso8601String()).toString().split('.')[0]}',
-                    style: const TextStyle(color: Colors.white70),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    onPressed: () async {
+                      final updatedTracks = await _sequencerModel.getSavedTracks();
+                      if (mounted) {
+                        setState(() {});
+                      }
+                    },
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _showDeleteTrackDialog(track['name'] ?? ''),
-                  ),
-                  onTap: () async {
-                    final success = await _sequencerModel.loadTrack(track['name'] ?? '');
-                    if (mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            success
-                                ? 'Track "${track['name']}" loaded successfully'
-                                : 'Failed to load track "${track['name']}"',
-                          ),
-                          backgroundColor: success ? Colors.green : Colors.red,
-                        ),
-                      );
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.white),
+                ],
               ),
-            ),
-          ],
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Colors.white70, size: 16),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Click on a track to load it',
+                            style: TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: tracks.length,
+                        itemBuilder: (context, index) {
+                          final track = tracks[index];
+                          final lastModified = DateTime.parse(track['lastModified'] ?? DateTime.now().toIso8601String());
+                          return Card(
+                            color: Colors.grey[800],
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              title: Text(
+                                track['name'] ?? 'Untitled',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Last modified: ${lastModified.toString().split('.')[0]}',
+                                    style: const TextStyle(color: Colors.white70),
+                                  ),
+                                  Text(
+                                    '${track['metadata']?['tempo'] ?? '120'} BPM • ${track['metadata']?['key'] ?? 'C'} ${track['metadata']?['scale'] ?? 'Major'}',
+                                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () => _showDeleteTrackDialog(track['name'] ?? ''),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Colors.blue),
+                                    onPressed: () => _showRenameTrackDialog(track['name'] ?? ''),
+                                  ),
+                                ],
+                              ),
+                              onTap: () async {
+                                final success = await _sequencerModel.loadTrack(track['name'] ?? '');
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? 'Track "${track['name']}" loaded successfully'
+                                            : 'Failed to load track "${track['name']}"',
+                                      ),
+                                      backgroundColor: success ? Colors.green : Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -325,6 +410,72 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
               child: Text(
                 'Delete',
                 style: TextStyle(color: Colors.red[300]),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showRenameTrackDialog(String currentName) {
+    String newName = currentName;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Rename Track',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: TextField(
+            controller: TextEditingController(text: currentName),
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              labelText: 'New Track Name',
+              labelStyle: TextStyle(color: Colors.white70),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white70),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+            onChanged: (value) => newName = value,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (newName.isNotEmpty && newName != currentName) {
+                  // Save the current track with new name
+                  await _sequencerModel.saveSequence(trackName: newName);
+                  // Delete the old track
+                  await _sequencerModel.deleteTrack(currentName);
+                  if (mounted) {
+                    Navigator.pop(context); // Close rename dialog
+                    Navigator.pop(context); // Close load dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Track renamed successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    // Refresh the load dialog
+                    _showLoadTrackDialog();
+                  }
+                }
+              },
+              child: const Text(
+                'Rename',
+                style: TextStyle(color: Colors.blue),
               ),
             ),
           ],
@@ -1000,6 +1151,8 @@ class _SequencerGridScreenState extends State<SequencerGridScreen> with SingleTi
 }
 
 class CustomizeInstrumentDialog extends StatefulWidget {
+  const CustomizeInstrumentDialog({super.key});
+
   @override
   _CustomizeInstrumentDialogState createState() => _CustomizeInstrumentDialogState();
 }

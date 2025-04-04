@@ -5,10 +5,10 @@ class InstrumentSelector extends StatelessWidget {
   final ValueChanged<String> onInstrumentChanged;
 
   const InstrumentSelector({
-    Key? key,
+    super.key,
     required this.selectedInstrument,
     required this.onInstrumentChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

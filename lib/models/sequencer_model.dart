@@ -2,6 +2,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
 class Layer {
   String name;
@@ -207,155 +208,123 @@ class SequencerModel extends ChangeNotifier {
   }
 
   Future<void> saveSequence({String? trackName}) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    
-    // Update track name if provided
-    if (trackName != null) {
-      currentTrackName = trackName;
-    }
-
-    // Update metadata
-    currentTrackMetadata = {
-      'tempo': tempo,
-      'key': 'C', // Update with actual key when implemented
-      'scale': 'Major', // Update with actual scale when implemented
-      'rhythm': '4/4', // Update with actual rhythm when implemented
-      'lastModified': DateTime.now().toIso8601String(),
-    };
-
-    // Create track data structure
-    Map<String, dynamic> trackData = {
-      'name': currentTrackName,
-      'metadata': currentTrackMetadata,
-      'layers': layers.map((layer) => {
-        'name': layer.name,
-        'instrument': layer.instrument,
-        'grid': layer.grid,
-        'volume': layer.volume,
-        'isMuted': layer.isMuted,
-      }).toList(),
-    };
-
-    // Get existing tracks or initialize empty list
-    List<String> savedTracks = prefs.getStringList('saved_tracks') ?? [];
-    Map<String, String> trackContents = {};
-
-    // Load existing track contents
-    for (String trackKey in savedTracks) {
-      String? content = prefs.getString('track_$trackKey');
-      if (content != null) {
-        trackContents[trackKey] = content;
-      }
-    }
-
-    // Add or update current track
-    String trackKey = currentTrackName.replaceAll(' ', '_').toLowerCase();
-    trackContents[trackKey] = _encodeTrackData(trackData);
-    savedTracks = trackContents.keys.toList();
-
-    // Save track list and contents
-    await prefs.setStringList('saved_tracks', savedTracks);
-    await prefs.setString('track_$trackKey', trackContents[trackKey]!);
-
-    // Save current track name
-    await prefs.setString('current_track', currentTrackName);
-  }
-
-  // Add helper method to encode track data
-  String _encodeTrackData(Map<String, dynamic> trackData) {
-    return trackData.toString(); // For simplicity. Consider using json.encode for proper serialization
-  }
-
-  // Add method to load saved tracks
-  Future<List<Map<String, String>>> getSavedTracks() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> savedTracks = prefs.getStringList('saved_tracks') ?? [];
-    List<Map<String, String>> trackList = [];
-
-    for (String trackKey in savedTracks) {
-      String? trackContent = prefs.getString('track_$trackKey');
-      if (trackContent != null) {
-        // Extract track name and last modified date
-        Map<String, dynamic> trackData = _decodeTrackData(trackContent);
-        trackList.add({
-          'name': trackData['name'] ?? 'Untitled',
-          'lastModified': trackData['metadata']?['lastModified'] ?? DateTime.now().toIso8601String(),
-        });
-      }
-    }
-
-    return trackList;
-  }
-
-  // Add helper method to decode track data
-  Map<String, dynamic> _decodeTrackData(String trackContent) {
-    // For simplicity. Consider using json.decode for proper deserialization
     try {
-      // Basic string to map conversion
-      return {'name': trackContent.split("'name': '")[1].split("'")[0]};
-    } catch (e) {
-      return {'name': 'Untitled'};
-    }
-  }
-
-  // Add method to load a specific track
-  Future<bool> loadTrack(String trackName) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String trackKey = trackName.replaceAll(' ', '_').toLowerCase();
-    String? trackContent = prefs.getString('track_$trackKey');
-
-    if (trackContent != null) {
-      try {
-        Map<String, dynamic> trackData = _decodeTrackData(trackContent);
-        currentTrackName = trackData['name'] ?? 'Untitled Track';
-        currentTrackMetadata = trackData['metadata'] ?? {};
-        
-        // Load track settings
-        tempo = currentTrackMetadata['tempo'] ?? 120.0;
-        // Add other settings when implemented
-        
-        // Load layers
-        List<dynamic> layerData = trackData['layers'] ?? [];
-        layers.clear();
-        for (var data in layerData) {
-          layers.add(Layer(
-            name: data['name'] ?? 'Untitled Layer',
-            instrument: data['instrument'] ?? 'Piano',
-            grid: List<bool>.from(data['grid'] ?? []),
-            volume: data['volume'] ?? 50.0,
-            isMuted: data['isMuted'] ?? false,
-          ));
-        }
-
-        if (layers.isEmpty) {
-          addLayer('Layer 1', 'Piano');
-        }
-        
-        activeLayerIndex = 0;
-        notifyListeners();
-        return true;
-      } catch (e) {
-        debugPrint('Error loading track: $e');
-        return false;
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      
+      // Update track name if provided
+      if (trackName != null) {
+        currentTrackName = trackName;
       }
+
+      // Validate track name
+      if (currentTrackName.isEmpty) {
+        throw Exception('Track name cannot be empty');
+      }
+
+      // Update metadata
+      currentTrackMetadata = {
+        'tempo': tempo,
+        'key': currentTrackMetadata['key'] ?? 'C',
+        'scale': currentTrackMetadata['scale'] ?? 'Major',
+        'rhythm': currentTrackMetadata['rhythm'] ?? '4/4',
+        'lastModified': DateTime.now().toIso8601String(),
+      };
+
+      // Create track data structure
+      Map<String, dynamic> trackData = {
+        'name': currentTrackName,
+        'metadata': currentTrackMetadata,
+        'layers': layers.map((layer) => {
+          'name': layer.name,
+          'instrument': layer.instrument,
+          'grid': layer.grid,
+          'volume': layer.volume,
+          'isMuted': layer.isMuted,
+        }).toList(),
+      };
+
+      // Get existing tracks or initialize empty list
+      List<String> savedTracks = prefs.getStringList('saved_tracks') ?? [];
+      String trackKey = currentTrackName.replaceAll(' ', '_').toLowerCase();
+
+      // Add or update current track
+      await prefs.setString('track_$trackKey', jsonEncode(trackData));
+      
+      // Update track list if it's a new track
+      if (!savedTracks.contains(trackKey)) {
+        savedTracks.add(trackKey);
+        await prefs.setStringList('saved_tracks', savedTracks);
+      }
+
+      // Save current track name
+      await prefs.setString('current_track', currentTrackName);
+    } catch (e) {
+      debugPrint('Error saving track: $e');
+      rethrow;
     }
-    return false;
   }
 
-  // Add method to delete a track
-  Future<bool> deleteTrack(String trackName) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String trackKey = trackName.replaceAll(' ', '_').toLowerCase();
-    
-    // Get existing tracks
-    List<String> savedTracks = prefs.getStringList('saved_tracks') ?? [];
-    if (savedTracks.contains(trackKey)) {
-      savedTracks.remove(trackKey);
-      await prefs.setStringList('saved_tracks', savedTracks);
-      await prefs.remove('track_$trackKey');
+  Future<bool> loadTrack(String trackName) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String trackKey = trackName.replaceAll(' ', '_').toLowerCase();
+      String? trackContent = prefs.getString('track_$trackKey');
+
+      if (trackContent == null) {
+        throw Exception('Track not found');
+      }
+
+      Map<String, dynamic> trackData = jsonDecode(trackContent);
+      currentTrackName = trackData['name'] ?? 'Untitled Track';
+      currentTrackMetadata = trackData['metadata'] ?? {};
+      
+      // Load track settings
+      tempo = double.tryParse(currentTrackMetadata['tempo']?.toString() ?? '') ?? 120.0;
+      
+      // Load layers
+      List<dynamic> layerData = trackData['layers'] ?? [];
+      layers.clear();
+      for (var data in layerData) {
+        layers.add(Layer(
+          name: data['name'] ?? 'Untitled Layer',
+          instrument: data['instrument'] ?? 'Piano',
+          grid: List<bool>.from(data['grid'] ?? []),
+          volume: data['volume'] ?? 50.0,
+          isMuted: data['isMuted'] ?? false,
+        ));
+      }
+
+      if (layers.isEmpty) {
+        addLayer('Layer 1', 'Piano');
+      }
+      
+      activeLayerIndex = 0;
+      notifyListeners();
       return true;
+    } catch (e) {
+      debugPrint('Error loading track: $e');
+      return false;
     }
-    return false;
+  }
+
+  Future<bool> deleteTrack(String trackName) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String trackKey = trackName.replaceAll(' ', '_').toLowerCase();
+      
+      // Get existing tracks
+      List<String> savedTracks = prefs.getStringList('saved_tracks') ?? [];
+      if (savedTracks.contains(trackKey)) {
+        savedTracks.remove(trackKey);
+        await prefs.setStringList('saved_tracks', savedTracks);
+        await prefs.remove('track_$trackKey');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error deleting track: $e');
+      return false;
+    }
   }
 
   void updateInstrument(String instrument) {
@@ -417,5 +386,41 @@ class SequencerModel extends ChangeNotifier {
     volume = newVolume;
     _audioPlayer.setVolume(volume / 100);
     notifyListeners();
+  }
+
+  Future<List<Map<String, dynamic>>> getSavedTracks() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tracks = prefs.getStringList('saved_tracks') ?? [];
+      final List<Map<String, dynamic>> trackList = [];
+
+      for (final trackName in tracks) {
+        final trackData = prefs.getString('track_$trackName');
+        if (trackData != null) {
+          try {
+            final Map<String, dynamic> track = jsonDecode(trackData);
+            trackList.add({
+              'name': trackName.replaceAll('_', ' '),
+              'lastModified': track['metadata']?['lastModified'] ?? DateTime.now().toIso8601String(),
+              'metadata': track['metadata'] ?? {},
+            });
+          } catch (e) {
+            debugPrint('Error parsing track data for $trackName: $e');
+          }
+        }
+      }
+
+      // Sort tracks by last modified date (newest first)
+      trackList.sort((a, b) {
+        final dateA = DateTime.parse(a['lastModified'] ?? DateTime.now().toIso8601String());
+        final dateB = DateTime.parse(b['lastModified'] ?? DateTime.now().toIso8601String());
+        return dateB.compareTo(dateA);
+      });
+
+      return trackList;
+    } catch (e) {
+      debugPrint('Error getting saved tracks: $e');
+      return [];
+    }
   }
 }

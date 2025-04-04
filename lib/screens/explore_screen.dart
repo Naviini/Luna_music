@@ -47,13 +47,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             flexibleSpace: Container(),
           ),
 
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Now..',
                     style: TextStyle(
                       fontSize: 22,
@@ -61,8 +61,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     "Let's unlock new insights with amazing community and share your community",
                     style: TextStyle(
                       fontSize: 16,

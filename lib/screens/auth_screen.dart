@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:permission_handler/permission_handler.dart';
-import 'Profile/profile_screen.dart'; // Navigate to Profile Screen
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
+
+import 'home_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -18,32 +18,34 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ImagePicker _picker = ImagePicker();
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
-  bool isLogin = true; // Toggle between login and register mode
+  final TextEditingController musicExperienceController =
+      TextEditingController();
+
+  DateTime? selectedBirthday;
+  bool isLogin = true;
   bool isLoading = false;
-  bool isPasswordVisible = false; // Toggle password visibility
+  bool isPasswordVisible = false;
   File? profileImage;
 
-  final ImagePicker _picker = ImagePicker();
-
-  // Request permission to access the gallery
   Future<void> _requestPermission() async {
     final status = await Permission.photos.request();
     if (status.isDenied || status.isRestricted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Permission to access gallery is denied.')),
+        const SnackBar(
+            content: Text('Permission to access gallery is denied.')),
       );
     }
   }
 
-  // Pick profile image from the gallery
   Future<void> _pickProfileImage() async {
-    // Ensure permission is granted before picking an image
     await _requestPermission();
-
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         profileImage = File(pickedFile.path);
@@ -51,53 +53,53 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  // Remove profile image
   void _removeProfileImage() {
     setState(() {
       profileImage = null;
     });
   }
 
-  // Upload image to Imgur and return the URL
-  Future<String> _uploadToImgur(File image) async {
-    final url = Uri.parse('https://api.imgur.com/3/upload');
-    final request = http.MultipartRequest('POST', url)
-      ..headers['Authorization'] = 'Client-ID YOUR_IMGUR_CLIENT_ID' // Replace with your Imgur client ID
-      ..files.add(await http.MultipartFile.fromPath('image', image.path));
+  Future<String> _uploadToFirebaseStorage(File image) async {
+    final storageRef = FirebaseStorage.instance.ref();
+    final fileName =
+        'profileImages/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final imageRef = storageRef.child(fileName);
 
-    final response = await request.send();
-    final responseData = await http.Response.fromStream(response);
+    await imageRef.putFile(image);
+    return await imageRef.getDownloadURL();
+  }
 
-    final data = jsonDecode(responseData.body);
-    if (data['success']) {
-      return data['data']['link']; // Return the image URL from Imgur
-    } else {
-      throw Exception('Failed to upload image');
+  Future<void> _selectBirthday() async {
+    final now = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+    if (picked != null) {
+      setState(() {
+        selectedBirthday = picked;
+      });
     }
   }
 
-  // Authenticate user (Login/Registration)
   Future<void> _authenticate() async {
     setState(() => isLoading = true);
     try {
       if (isLogin) {
-        // Login logic
         await _auth.signInWithEmailAndPassword(
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
       } else {
-        // Register logic with validation
-        if (usernameController.text.isEmpty || emailController.text.isEmpty || passwordController.text.isEmpty) {
+        if (usernameController.text.isEmpty ||
+            emailController.text.isEmpty ||
+            passwordController.text.isEmpty ||
+            selectedBirthday == null ||
+            musicExperienceController.text.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('All fields are required.')),
-          );
-          return;
-        }
-
-        if (!RegExp(r"^[a-zA-Z0-9]+$").hasMatch(usernameController.text)) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Username should only contain letters and numbers.')),
+            const SnackBar(content: Text('All fields are required.')),
           );
           return;
         }
@@ -107,29 +109,28 @@ class _AuthScreenState extends State<AuthScreen> {
           password: passwordController.text.trim(),
         );
 
-        // Upload profile picture and store the download URL (if an image is selected)
-        String profileImageUrl = 'assets/defaultProfile.png'; // Default image
+        String profileImageUrl = 'assets/profile.png';
         if (profileImage != null) {
-          profileImageUrl = await _uploadToImgur(profileImage!);
+          profileImageUrl = await _uploadToFirebaseStorage(profileImage!);
         }
 
-        // Create a new user document in Firestore
-        final userId = userCredential.user!.uid; // Use UID from Firebase Auth
+        final userId = userCredential.user!.uid;
         await _firestore.collection('users').doc(userId).set({
           'userId': userId,
           'username': usernameController.text.trim(),
           'email': emailController.text.trim(),
-          'bio': '', // Default empty bio
-          'profileImageUrl': profileImageUrl, // Profile image URL
-          'followers': 0, // Default followers count
-          'following': 0, // Default following count
+          'birthday': selectedBirthday!.toIso8601String(),
+          'musicExperience': musicExperienceController.text.trim(),
+          'bio': '',
+          'profileImageUrl': profileImageUrl,
+          'followers': 0,
+          'following': 0,
         });
       }
 
-      // Navigate to Profile Screen after success
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,56 +144,113 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(isLogin ? 'Login' : 'Register')),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text(
+          'Luna', // Add the name 'Luna' here
+          style: TextStyle(
+              color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
         child: ListView(
           children: [
             if (!isLogin) ...[
-              // Username field with validation
-              TextField(
-                controller: usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  errorText: usernameController.text.isEmpty ? 'Username cannot be empty' : null,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Profile image picker
+              const SizedBox(height: 20),
               GestureDetector(
                 onTap: _pickProfileImage,
                 child: CircleAvatar(
-                  radius: 50,
+                  radius: 60,
+                  backgroundColor: Colors.grey[800],
                   backgroundImage: profileImage != null
                       ? FileImage(profileImage!)
-                      : AssetImage('assets/defaultProfile.png') as ImageProvider,
+                      : const AssetImage('assets/defaultProfile.png')
+                          as ImageProvider,
                   child: profileImage == null
-                      ? Icon(Icons.camera_alt, size: 50, color: Colors.white)
+                      ? const Icon(Icons.camera_alt,
+                          size: 50, color: Colors.white)
                       : null,
                 ),
               ),
               if (profileImage != null)
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: _removeProfileImage,
                 ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: usernameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Username',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.white38),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: musicExperienceController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Music Making Experience',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: Colors.white38),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                title: Text(
+                  selectedBirthday == null
+                      ? 'Choose your birthday'
+                      : 'Birthday: ${selectedBirthday!.toLocal()}'
+                          .split(' ')[0],
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                trailing:
+                    const Icon(Icons.calendar_today, color: Colors.white70),
+                onTap: _selectBirthday,
+              ),
+              const Divider(color: Colors.white24),
             ],
-            const SizedBox(height: 20),
-            // Email field
+            const SizedBox(height: 16),
             TextField(
               controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Email',
+                labelStyle: const TextStyle(color: Colors.white70),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: Colors.white38),
+                ),
+              ),
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: 10),
-            // Password field with show/hide functionality
+            const SizedBox(height: 16),
             TextField(
               controller: passwordController,
+              obscureText: !isPasswordVisible,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Password',
+                labelStyle: const TextStyle(color: Colors.white70),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: Colors.white38),
+                ),
                 suffixIcon: IconButton(
                   icon: Icon(
                     isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    color: Colors.white70,
                   ),
                   onPressed: () {
                     setState(() {
@@ -201,25 +259,36 @@ class _AuthScreenState extends State<AuthScreen> {
                   },
                 ),
               ),
-              obscureText: !isPasswordVisible,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor:
+                          const Color(0xFF9C27B0), // Text color white
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
                     onPressed: _authenticate,
                     child: Text(isLogin ? 'Login' : 'Register'),
                   ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextButton(
               onPressed: () {
                 setState(() {
-                  isLogin = !isLogin; // Toggle between login and register
+                  isLogin = !isLogin;
                 });
               },
-              child: Text(isLogin
-                  ? 'New user? Register here'
-                  : 'Already have an account? Login'),
+              child: Text(
+                isLogin
+                    ? 'New user? Register here'
+                    : 'Already have an account? Login',
+                style: const TextStyle(color: Colors.white54),
+              ),
             ),
           ],
         ),
